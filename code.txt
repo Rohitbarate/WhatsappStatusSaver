@@ -1,0 +1,164 @@
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  PermissionsAndroid,
+  ToastAndroid,
+  Platform,
+} from 'react-native';
+import RNFS from 'react-native-fs';
+import {
+  check,
+  PERMISSIONS,
+  request,
+  requestMultiple,
+} from 'react-native-permissions';
+
+const App: React.FC = () => {
+  type statuses = {
+    allStatuses: any[];
+    currentMedia: String;
+  };
+
+  const [statuses, setStatuses] = useState<statuses>({
+    allStatuses: [],
+    currentMedia: '',
+  });
+  const [granted, setGranted] = useState<boolean>(false);
+  const WhatsAppStatusDirectory = `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
+
+  useEffect(() => {
+    requestStoragePermission();
+  }, []);
+
+  const requestStoragePermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ]).then(result => {
+          if (
+            result['android.permission.READ_MEDIA_IMAGES'] &&
+            result['android.permission.READ_MEDIA_VIDEO'] &&
+            result['android.permission.READ_MEDIA_AUDIO'] &&
+            result['android.permission.READ_EXTERNAL_STORAGE'] &&
+            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+          ) {
+            console.log('permission granted');
+            setGranted(true);
+            loadStatuses();
+            return true;
+          } else if (
+            result['android.permission.READ_MEDIA_IMAGES'] ||
+            result['android.permission.READ_MEDIA_VIDEO'] ||
+            result['android.permission.READ_MEDIA_AUDIO'] ||
+            result['android.permission.READ_EXTERNAL_STORAGE'] ||
+            result['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+              'never_ask_again'
+          ) {
+            ToastAndroid.show(
+              'Please Go into Settings -> Applications -> APP_NAME -> Permissions and Allow permissions to continue',
+              ToastAndroid.LONG,
+            );
+            setGranted(false);
+            return false;
+          }
+        });
+      }
+      // const granted = await PermissionsAndroid.request(
+      //   PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      //   {
+      //     title: 'Whata Status Access',
+      //     message: 'Whata status required storage access',
+      //     buttonNeutral: 'Ask Me Later',
+      //     buttonNegative: 'Cancel',
+      //     buttonPositive: 'OK',
+      //   },
+      // );
+      // if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      //   console.log('You can use the storage');
+      //   return true;
+      //   //this.getDirectoryPerm();
+      // } else {
+      //   console.log('Storage permission denied');
+      //   return false;
+      // }
+    } catch (err) {
+      return false;
+    }
+  };
+
+
+  const loadStatuses = async () => {
+    // let granted = await requestStoragePermission();
+    try {
+      if (granted) {
+        console.log('called');
+        RNFS.readDir(WhatsAppStatusDirectory)
+          .then(result => {
+            console.log('GOT RESULT:', result);
+            setStatuses(prevState => ({...prevState, allStatuses: result}));
+          })
+          .catch(err => {
+            console.log('error: ', err.message, err.code);
+          });
+      }
+    } catch (error) {
+      console.log({error});
+    }
+  };
+
+ 
+  const saveStatus = async (status: string) => {
+    const WhatsAppStatusDirectory = `${RNFS.ExternalStorageDirectoryPath}/WhatsApp/Media/.Statuses`;
+    const sourcePath = `${WhatsAppStatusDirectory}/${status}`;
+
+    const destPath = `${RNFS.ExternalStorageDirectoryPath}/WhatsAppStatusSaver/${status}`;
+    try {
+      await RNFS.copyFile(sourcePath, destPath);
+      console.log('Status saved successfully');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const renderStatus = ({item}: {item: string}) => {
+    // const WhatsAppStatusDirectory =
+    //   `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp/WhatsApp/Media/`;
+    const statusPath = `${WhatsAppStatusDirectory}/${item}`;
+    console.log({item});
+
+    return (
+      <View style={{alignItems: 'center', justifyContent: 'center'}}>
+        <Text>{item.name}</Text>
+        <Image
+          style={{width: 200, height: 200}}
+          source={{uri: `file://${item.path}`}}
+        />
+        <TouchableOpacity onPress={() => saveStatus(item)}>
+          <Text>Save</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  return (
+    <View style={{flex: 1, alignItems: 'center'}}>
+      <Text style={{marginVertical: 20}}>WhatsApp Status Saver</Text>
+      <FlatList
+        data={statuses.allStatuses}
+        renderItem={renderStatus}
+        keyExtractor={item => item.name}
+      />
+    </View>
+  );
+};
+
+export default App;

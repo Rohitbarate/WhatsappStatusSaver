@@ -72,7 +72,9 @@ const CurrentMediaScreen = ({
     }));
   });
   return (
-    <Modal transparent visible={isCrntStatusVisible}>
+    <Modal
+      animationType='slide'
+     transparent visible={isCrntStatusVisible}>
       {/* <TouchableOpacity
         style={{flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)'}}
         onPress={() => setIsCrntStatusVisible(false)}> */}
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     alignSelf: 'center',
     width: '100%',
-    height: undefined,
+    height: 500,
     marginTop: 10,
     marginBottom: 10,
     zIndex: 100,

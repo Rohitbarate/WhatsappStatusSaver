@@ -4,6 +4,7 @@ import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import RecentScreen from './RecentScreen';
 import SavedScreen from './SavedScreen';
+import RecentScreenStack from '../navigation/RecentScreenStack';
 
 const HomeScreen = () => {
   const TopTabBar = createMaterialTopTabNavigator();
@@ -19,7 +20,7 @@ const HomeScreen = () => {
       }}>
       <TopTabBar.Screen
         name="Recent"
-        component={RecentScreen}
+        component={RecentScreenStack}
         options={{
         //   tabBarIcon: ({color}) => (
         //     <MaterialCommunityIcons name="camera-timer" size={20} color={color} />

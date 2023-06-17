@@ -3,7 +3,7 @@ import {
   View,
   Text,
   FlatList,
-  Image,
+  Alert,
   TouchableOpacity,
   PermissionsAndroid,
   ToastAndroid,
@@ -11,19 +11,24 @@ import {
   StyleSheet,
   Modal,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import CurrentMediaScreen from './CurrentMediaScreen';
+import SelectedStatus from './SelectedStatus';
 
-const RecentScreen = () => {
+const RecentScreen = ({navigation}) => {
   const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('ALL'); // opts : 'IMG','VIDEO','ALL' .etc
+  const [filter, setFilter] = useState('ALL'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [statuses, setStatuses] = useState({
     allStatuses: [],
     currentMedia: '',
+    mediaName: '',
   });
+  const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const {height, width} = Dimensions.get('window');
 
@@ -37,23 +42,24 @@ const RecentScreen = () => {
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
-  const AllMedia = /\.(jpg|jpeg|png|gif|pdf|mp4|mov)$/i;
+  const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
 
   const getStatuses = async () => {
     try {
-        setLoading(true)
+      setLoading(true);
       const granted = await requestPermissions();
       if (!granted) {
-          setIsAllPermissionGranted(false);
-          setLoading(false)
+        setIsAllPermissionGranted(false);
+        setLoading(false);
       } else {
         setIsAllPermissionGranted(true);
         const files = await RNFS.readDir(WhatsAppStatusDirectory);
-        if (filter === 'IMG') {
+        console.log(files);
+        if (filter === 'IMAGES') {
           const filterFiles = files.filter(file => onlyImages.test(file.name));
           console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        } else if (filter === 'VIDEO') {
+        } else if (filter === 'VIDEOS') {
           const filterFiles = files.filter(file => onlyVideos.test(file.name));
           console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
@@ -62,10 +68,10 @@ const RecentScreen = () => {
           console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
-        setLoading(false)
+        setLoading(false);
       }
     } catch (error) {
-        setLoading(false)
+      setLoading(false);
       console.log({getAllStatuses_error: error});
     }
   };
@@ -135,11 +141,33 @@ const RecentScreen = () => {
   };
   //   media filter logic end
 
+  BackHandler.addEventListener('hardwareBackPress', () => {
+    // if(statuses.currentMedia.length !== 0){
+    setStatuses(prevState => ({
+      ...prevState,
+      currentMedia: '',
+      mediaName: '',
+    }));
+    // }else{
+    //   Alert.alert('You want to close the app','swipe again to close the app',[
+    //     {
+    //       title:'cancel',
+    //       style:'cancel'
+    //     },
+    //     {
+    //       title:'EXIT',
+    //       style:'exit',
+
+    //     }
+    //   ])
+    // }
+  });
+
   return (
     <View
       style={{
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
         // paddingHorizontal:10
       }}>
@@ -159,7 +187,7 @@ const RecentScreen = () => {
             flexDirection: 'row',
           }}
           onPress={handlePress}>
-          <Text style={{color: '#000'}}>Filter</Text>
+          <Text style={{color: '#000'}}>{filter}</Text>
           <MaterialCommunityIcons name={'filter'} size={24} color={'#000'} />
         </TouchableOpacity>
         <Modal visible={filterModalVisible} animationType="fade" transparent>
@@ -187,7 +215,7 @@ const RecentScreen = () => {
                 }}>
                 <TouchableOpacity
                   style={{marginTop: 10}}
-                  onPress={() => handleFilter('IMG')}>
+                  onPress={() => handleFilter('IMAGES')}>
                   <Text style={{color: '#000'}}>Images</Text>
                 </TouchableOpacity>
                 <View
@@ -196,7 +224,7 @@ const RecentScreen = () => {
 
                 <TouchableOpacity
                   style={{marginTop: 10}}
-                  onPress={() => handleFilter('VIDEO')}>
+                  onPress={() => handleFilter('VIDEOS')}>
                   <Text style={{color: '#000'}}>Videos</Text>
                 </TouchableOpacity>
                 <View
@@ -216,6 +244,15 @@ const RecentScreen = () => {
           </TouchableOpacity>
         </Modal>
       </View>
+
+      {statuses.currentMedia && (
+        <CurrentMediaScreen
+          isCrntStatusVisible={isCrntStatusVisible}
+          setIsCrntStatusVisible={setIsCrntStatusVisible}
+          status={statuses}
+          setStatuses={setStatuses}
+        />
+      )}
 
       {!isAllPermissionGranted && (
         <Modal animationType="slide" transparent={true}>
@@ -240,6 +277,7 @@ const RecentScreen = () => {
           </View>
         </Modal>
       )}
+
       {statuses.allStatuses.length !== 0 ? (
         <FlatList
           refreshing={loading}
@@ -251,10 +289,20 @@ const RecentScreen = () => {
           numColumns={2}
           data={statuses.allStatuses}
           keyExtractor={item => item.name}
-          renderItem={StatusView}
+          renderItem={({item}) => (
+            <StatusView
+              item={item}
+              isCrntStatusVisible={isCrntStatusVisible}
+              setIsCrntStatusVisible={setIsCrntStatusVisible}
+              setStatuses={setStatuses}
+              navigation={navigation}
+            />
+          )}
         />
       ) : (
-        <Text>Status not available. </Text>
+        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <Text>Status not available. </Text>
+        </View>
       )}
     </View>
   );

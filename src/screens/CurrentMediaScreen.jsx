@@ -105,6 +105,7 @@ const CurrentMediaScreen = ({
             <Icon name="md-arrow-back-outline" size={35} color={'#fff'} />
           </TouchableOpacity>
           {status.mediaName.indexOf('.jpg' || '.jpeg' || '.png') !== -1 ? (
+            <View style={styles.container}>
             <Image
               source={{uri: `file://${status.currentMedia}`}}
               style={{
@@ -114,6 +115,7 @@ const CurrentMediaScreen = ({
                 backgroundColor: '#000',
               }}
             />
+            </View>
           ) : (
             <View style={styles.container}>
               <Video

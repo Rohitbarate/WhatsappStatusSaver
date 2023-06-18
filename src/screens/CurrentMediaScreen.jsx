@@ -72,9 +72,7 @@ const CurrentMediaScreen = ({
     }));
   });
   return (
-    <Modal
-      animationType='slide'
-     transparent visible={isCrntStatusVisible}>
+    <Modal animationType="slide" transparent visible={isCrntStatusVisible}>
       {/* <TouchableOpacity
         style={{flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)'}}
         onPress={() => setIsCrntStatusVisible(false)}> */}
@@ -106,15 +104,15 @@ const CurrentMediaScreen = ({
           </TouchableOpacity>
           {status.mediaName.indexOf('.jpg' || '.jpeg' || '.png') !== -1 ? (
             <View style={styles.container}>
-            <Image
-              source={{uri: `file://${status.currentMedia}`}}
-              style={{
-                height: 400,
-                width: width - 20,
-                resizeMode: 'contain',
-                backgroundColor: '#000',
-              }}
-            />
+              <Image
+                source={{uri: `file://${status.currentMedia}`}}
+                style={{
+                  height: 400,
+                  width: width - 20,
+                  resizeMode: 'contain',
+                  backgroundColor: '#000',
+                }}
+              />
             </View>
           ) : (
             <View style={styles.container}>
@@ -125,6 +123,7 @@ const CurrentMediaScreen = ({
                 fullscreen={true}
                 pictureInPicture={true}
                 resizeMode="contain"
+                repeat={true}
               />
             </View>
           )}
@@ -174,7 +173,7 @@ const styles = StyleSheet.create({
     backfaceVisibility: 'visible',
   },
   modalView: {
-    flex:1,
+    flex: 1,
     backgroundColor: '#fff',
     borderRadius: 20,
     overflow: 'hidden',
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 0,
-    zIndex:0,
+    zIndex: 0,
     flexDirection: 'column',
   },
   button: {

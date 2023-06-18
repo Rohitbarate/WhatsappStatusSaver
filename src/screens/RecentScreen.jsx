@@ -36,6 +36,32 @@ const RecentScreen = ({navigation}) => {
 
   useEffect(() => {
     getStatuses();
+    
+    const backAction = () => {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        Alert.alert(
+          'Exit App',
+          'Are you sure you want to exit?',
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Exit', onPress: () => BackHandler.exitApp()},
+          ],
+          {cancelable: false},
+        );
+      }
+
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    // Cleanup the event listener when the component is unmounted
+    return () => backHandler.remove();
   }, [filter]);
 
   const WhatsAppStatusDirectory = `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
@@ -141,26 +167,14 @@ const RecentScreen = ({navigation}) => {
   };
   //   media filter logic end
 
-  BackHandler.addEventListener('hardwareBackPress', () => {
-    // if(statuses.currentMedia.length !== 0){
-    setStatuses(prevState => ({
-      ...prevState,
-      currentMedia: '',
-      mediaName: '',
-    }));
-    // }else{
-    //   Alert.alert('You want to close the app','swipe again to close the app',[
-    //     {
-    //       title:'cancel',
-    //       style:'cancel'
-    //     },
-    //     {
-    //       title:'EXIT',
-    //       style:'exit',
+  const currentTime = new Date();
 
-    //     }
-    //   ])
-    // }
+  const sortedData = [...statuses.allStatuses].sort((a, b) => {
+    const timeA = new Date(a.mtime);
+    const timeB = new Date(b.mtime);
+    const differenceA = currentTime - timeA;
+    const differenceB = currentTime - timeB;
+    return differenceA - differenceB;
   });
 
   return (
@@ -245,14 +259,14 @@ const RecentScreen = ({navigation}) => {
         </Modal>
       </View>
 
-      {statuses.currentMedia && (
+      {/* {statuses.currentMedia && (
         <CurrentMediaScreen
           isCrntStatusVisible={isCrntStatusVisible}
           setIsCrntStatusVisible={setIsCrntStatusVisible}
           status={statuses}
           setStatuses={setStatuses}
         />
-      )}
+      )} */}
 
       {!isAllPermissionGranted && (
         <Modal animationType="slide" transparent={true}>
@@ -287,7 +301,7 @@ const RecentScreen = ({navigation}) => {
           showsVerticalScrollIndicator={true}
           scrollIndicatorInsets={{right: 2}}
           numColumns={2}
-          data={statuses.allStatuses}
+          data={sortedData}
           keyExtractor={item => item.name}
           renderItem={({item}) => (
             <StatusView
@@ -296,6 +310,7 @@ const RecentScreen = ({navigation}) => {
               setIsCrntStatusVisible={setIsCrntStatusVisible}
               setStatuses={setStatuses}
               navigation={navigation}
+              statuses={statuses}
             />
           )}
         />

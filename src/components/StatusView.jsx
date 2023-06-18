@@ -8,8 +8,15 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import React from 'react';
+import Icon from 'react-native-vector-icons/AntDesign';
 
-const StatusView = ({item, setIsCrntStatusVisible, setStatuses,navigation}) => {
+const StatusView = ({
+  item,
+  setIsCrntStatusVisible,
+  setStatuses,
+  navigation,
+  statuses,
+}) => {
   // console.log({item});
   const {height, width} = Dimensions.get('window');
   return (
@@ -18,10 +25,13 @@ const StatusView = ({item, setIsCrntStatusVisible, setStatuses,navigation}) => {
         setStatuses(prevState => ({
           ...prevState,
           currentMedia: item.path,
-          mediaName:item.name
+          mediaName: item.name,
         }));
         setIsCrntStatusVisible(true);
-      
+        navigation.push('SelectedStatusScreen', {
+          uri: item.path,
+          statusName: item.name,
+        });
       }}>
       <View style={[styles.outerView, {width: width / 2.3}]}>
         <Image
@@ -33,7 +43,11 @@ const StatusView = ({item, setIsCrntStatusVisible, setStatuses,navigation}) => {
           }}
           source={{uri: `file://${item.path}`}}
         />
-        {/* <Text style={{color:'#000'}}>{item.name}</Text> */}
+        {item.name.indexOf('.jpg' || '.jpeg' || '.png') === -1 && (
+          <View style={{position:'absolute',alignSelf:'center',backgroundColor:'#fff',borderRadius:50}}>
+            <Icon name="play" color="#131313c7" size={50} />
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );

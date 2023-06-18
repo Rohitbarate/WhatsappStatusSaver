@@ -12,11 +12,14 @@ const RecentScreenStack = () => {
    <Stack.Navigator
     initialRouteName='recentScreen'
    screenOptions={{
-    headerShown:false
+    // headerShown:false
    }}
    >
-    <Stack.Screen name='recentScreen' component={RecentScreen} />
-    <Stack.Screen name='SelectedStatusScreen' component={SelectedStatus} />
+    <Stack.Screen name='recentScreen' component={RecentScreen} options={{
+     
+      headerShown:false
+    }} />
+    <Stack.Screen name='SelectedStatusScreen' component={SelectedStatus} options={{ animation:'slide_from_bottom',}} />
    </Stack.Navigator>
   )
 }

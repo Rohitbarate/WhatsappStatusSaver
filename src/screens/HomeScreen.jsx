@@ -5,19 +5,27 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import RecentScreen from './RecentScreen';
 import SavedScreen from './SavedScreen';
 import RecentScreenStack from '../navigation/RecentScreenStack';
+import {getFocusedRouteNameFromRoute} from '@react-navigation/native'
 
 const HomeScreen = () => {
   const TopTabBar = createMaterialTopTabNavigator();
 
+  const getTabBarVisibility = route => {
+    const routeName = getFocusedRouteNameFromRoute(route);
+    const hideOnScreens = ['SelectedStatusScreen'];
+    return hideOnScreens.indexOf(routeName) <= -1;
+  };
+
   return (
     <TopTabBar.Navigator
-      screenOptions={{
+      screenOptions={({route})=>({
         tabBarInactiveTintColor: '#fff',
         tabBarActiveTintColor: '#25D366',
-        tabBarStyle: {backgroundColor: '#075e54'},
+        tabBarStyle: {backgroundColor: '#075e54',display:getTabBarVisibility(route)?'flex':'none'},
         tabBarShowIcon: true,
         tabBarIndicatorStyle:{backgroundColor:'#25D366'}
-      }}>
+
+      })}>
       <TopTabBar.Screen
         name="Recent"
         component={RecentScreenStack}

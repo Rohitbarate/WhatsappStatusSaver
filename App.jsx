@@ -1,5 +1,5 @@
-import {StyleSheet, Text, View} from 'react-native';
-import React, {useEffect} from 'react';
+import {StyleSheet, Text, View, NativeModules} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
@@ -9,15 +9,38 @@ import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+// import * as ScopedStorage from 'react-native-scoped-storage';
 
 const Tab = createMaterialBottomTabNavigator();
 
+// const {ScopedStorage} = NativeModules;
+const {CalendarModule, ScopedStorage} = NativeModules;
+
 const App = () => {
+  const [loading, setLoading] = useState(false);
   const getTabBarVisibility = route => {
     const routeName = getFocusedRouteNameFromRoute(route);
     const hideOnScreens = ['SelectedStatusScreen'];
-    return hideOnScreens.indexOf(routeName) <= -1;
+    return hideOnScreens.indexOf(routeName) >= -1;
   };
+
+
+  useEffect(() => {
+    const getAccess = async () => {
+      ScopedStorage.requestAccessToStatusesFolder()
+      .then(folderUri => {
+        console.log('Folder URI:', folderUri);
+        // Handle the folder URI
+      })
+      .catch(error => {
+        console.error('Failed to open folder:', error);
+        // Handle the error
+      });
+    };
+    getAccess();
+ 
+   
+  }, []);
 
   return (
     <NavigationContainer>
@@ -40,7 +63,6 @@ const App = () => {
             tabBarIcon: ({color}) => (
               <MaterialCommunityIcons name="home" color={color} size={24} />
             ),
-            
           })}
         />
         <Tab.Screen

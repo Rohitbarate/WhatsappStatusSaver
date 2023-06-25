@@ -33,7 +33,7 @@ const SavedScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    getStatuses();
+    // getStatuses();
     const backAction = () => {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -77,18 +77,18 @@ const SavedScreen = ({navigation}) => {
       } else {
         setIsAllPermissionGranted(true);
         const files = await RNFS.readDir(WhatsAppStatusDirectory);
-        console.log(files);
+        // console.log(files);
         if (filter === 'IMAGES') {
           const filterFiles = files.filter(file => onlyImages.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else if (filter === 'VIDEOS') {
           const filterFiles = files.filter(file => onlyVideos.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
           const filterFiles = files.filter(file => AllMedia.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
         setLoading(false);
@@ -265,7 +265,7 @@ const SavedScreen = ({navigation}) => {
         />
       )} */}
 
-      {!isAllPermissionGranted && (
+      {/* {!isAllPermissionGranted && (
         <Modal animationType="slide" transparent={true}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -287,7 +287,7 @@ const SavedScreen = ({navigation}) => {
             </View>
           </View>
         </Modal>
-      )}
+      )} */}
 
       {statuses.allStatuses.length !== 0 ? (
         <FlatList

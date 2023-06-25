@@ -73,10 +73,18 @@ const SelectedStatus = ({route, navigation}) => {
   return (
     <View style={styles.container}>
       {statusName.indexOf('.jpg' || '.jpeg' || '.png') !== -1 ? (
-        // <View style={styles.container}>
-        <Image source={{uri: `file://${uri}`}} style={styles.image} />
+        <View
+          style={{
+            width: Dimensions.get('window').width - 20,
+            backgroundColor: 'red',
+            alignItems:'center',
+            height:500,
+            borderRadius:10,
+            overflow:'hidden'
+          }}>
+          <Image source={{uri: `file://${uri}`}} style={styles.image} />
+        </View>
       ) : (
-        // </View>
         <Video
           source={{uri: `file://${uri}`}}
           style={styles.video}
@@ -131,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     width: Dimensions.get('window').width - 20,
     height: 500,
-    borderRadius: 10,
+    // borderRadius: 10,
     resizeMode: 'contain',
   },
   video: {

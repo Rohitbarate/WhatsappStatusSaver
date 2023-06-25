@@ -12,12 +12,22 @@ import {
   Modal,
   Dimensions,
   BackHandler,
+  ActivityIndicator,
+  NativeModules,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {
+  checkMultiple,
+  PERMISSIONS,
+  request,
+  RESULTS,
+} from 'react-native-permissions';
 import CurrentMediaScreen from './CurrentMediaScreen';
 import SelectedStatus from './SelectedStatus';
+const {CalendarModule, ScopedStorage} = NativeModules;
+
 
 const RecentScreen = ({navigation}) => {
   const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
@@ -35,8 +45,10 @@ const RecentScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
+
+    setLoading(true)
     getStatuses();
-    
+
     const backAction = () => {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -73,50 +85,62 @@ const RecentScreen = ({navigation}) => {
   const getStatuses = async () => {
     try {
       setLoading(true);
-      const granted = await requestPermissions();
-      if (!granted) {
+      const result = await checkMultiple([
+        PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+        PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
+         PERMISSIONS.ANDROID.MANAGE_EXTERNAL_STORAGE,
+      ]);
+     
+      if (
+        result[PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE] !==
+          RESULTS.GRANTED ||
+        result[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] !== RESULTS.GRANTED 
+        // result[PERMISSIONS.ANDROID.MANAGE_EXTERNAL_STORAGE] !== RESULTS.GRANTED
+      ) {
+        console.log('false');
         setIsAllPermissionGranted(false);
         setLoading(false);
       } else {
+        console.log('true');
         setIsAllPermissionGranted(true);
         const files = await RNFS.readDir(WhatsAppStatusDirectory);
         console.log(files);
         if (filter === 'IMAGES') {
           const filterFiles = files.filter(file => onlyImages.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else if (filter === 'VIDEOS') {
           const filterFiles = files.filter(file => onlyVideos.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
           const filterFiles = files.filter(file => AllMedia.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
         setLoading(false);
       }
     } catch (error) {
       setLoading(false);
-      console.log({getAllStatuses_error: error});
+      console.log({getAllStatuses_error: {error}});
     }
   };
 
   const requestPermissions = async () => {
     try {
       return PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         // PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
       ])
         .then(result => {
           if (
-            result['android.permission.READ_MEDIA_IMAGES'] &&
-            result['android.permission.READ_MEDIA_VIDEO'] &&
-            result['android.permission.READ_MEDIA_AUDIO'] &&
+            // result['android.permission.READ_MEDIA_IMAGES'] &&
+            // result['android.permission.READ_MEDIA_VIDEO'] &&
+            // result['android.permission.READ_MEDIA_AUDIO'] &&
             result['android.permission.READ_EXTERNAL_STORAGE'] &&
             // result['android.permission.MANAGE_EXTERNAL_STORAGE'] &&
             result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
@@ -126,9 +150,9 @@ const RecentScreen = ({navigation}) => {
             //   loadStatuses();
             return true;
           } else if (
-            result['android.permission.READ_MEDIA_IMAGES'] ||
-            result['android.permission.READ_MEDIA_VIDEO'] ||
-            result['android.permission.READ_MEDIA_AUDIO'] ||
+            // result['android.permission.READ_MEDIA_IMAGES'] ||
+            // result['android.permission.READ_MEDIA_VIDEO'] ||
+            // result['android.permission.READ_MEDIA_AUDIO'] ||
             result['android.permission.READ_EXTERNAL_STORAGE'] ||
             // result['android.permission.MANAGE_EXTERNAL_STORAGE'] ||
             result['android.permission.WRITE_EXTERNAL_STORAGE'] ===
@@ -268,6 +292,24 @@ const RecentScreen = ({navigation}) => {
         />
       )} */}
 
+      {loading && (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 100,
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: '#ffffff80',
+          }}>
+          <ActivityIndicator color={'green'} size={30} />
+        </View>
+      )}
+
       {!isAllPermissionGranted && (
         <Modal animationType="slide" transparent={true}>
           <View style={styles.centeredView}>
@@ -280,7 +322,7 @@ const RecentScreen = ({navigation}) => {
                   textAlign: 'center',
                   textTransform: 'capitalize',
                 }}>
-                App Needs Storage Permission to load your whatsapp statuses
+                App Needs Storage Permission to download your whatsapp statuses
               </Text>
               <TouchableOpacity
                 onPress={requestPermissions}

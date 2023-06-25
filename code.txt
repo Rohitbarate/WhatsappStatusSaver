@@ -162,3 +162,46 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+
+
+String path = Environment.getExternalStorageDirectory() + "/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/";
+        File file = new File(path);
+        String startDir, secondDir, finalDirPath;
+
+        if (file.exists()) {
+            startDir = "Android%2Fmedia%2Fcom.whatsapp%2FWhatsapp%2FMedia%2F.Statuses%2F";
+        }
+        
+
+        StorageManager sm = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
+
+        Intent intent = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                intent = sm.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
+            }
+        }
+
+
+        Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
+
+        String scheme = uri.toString();
+
+        Log.d("TAG", "INITIAL_URI scheme: " + scheme);
+
+        scheme = scheme.replace("/root/", "/document/");
+
+        finalDirPath = scheme + "%3A" + startDir;
+
+        uri = Uri.parse(finalDirPath);
+
+        intent.putExtra("android.provider.extra.INITIAL_URI", uri);
+
+        Log.d("TAG", "uri: " + uri.toString());
+
+        try {
+            startActivityForResult(intent, 6);
+        } catch (ActivityNotFoundException ignored) {
+
+        }

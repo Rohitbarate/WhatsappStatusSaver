@@ -16,6 +16,7 @@ import {
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNFetchBlob from 'rn-fetch-blob';
 
 const SavedScreen = ({navigation}) => {
   const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
@@ -29,11 +30,12 @@ const SavedScreen = ({navigation}) => {
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const {height, width} = Dimensions.get('window');
+  const [fileNames, setFileNames] = useState([]);
 
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    // getStatuses();
+    getStatuses();
     const backAction = () => {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -61,7 +63,7 @@ const SavedScreen = ({navigation}) => {
     return () => backHandler.remove();
   }, [filter]);
 
-  const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
+  const WhatsAppStatusDirectory = `${RNFetchBlob.fs.dirs.DocumentDir}/Media/Statuses/`;
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
@@ -70,28 +72,29 @@ const SavedScreen = ({navigation}) => {
   const getStatuses = async () => {
     try {
       setLoading(true);
-      const granted = await requestPermissions();
+      const granted = true;
+      // const granted = await requestPermissions();
       if (!granted) {
         setIsAllPermissionGranted(false);
         setLoading(false);
       } else {
         setIsAllPermissionGranted(true);
-        const files = await RNFS.readDir(WhatsAppStatusDirectory);
-        // console.log(files);
+        const files = await RNFetchBlob.fs.lstat(WhatsAppStatusDirectory)
+        console.log({files});
         if (filter === 'IMAGES') {
-          const filterFiles = files.filter(file => onlyImages.test(file.name));
+          const filterFiles = files.filter(file => onlyImages.test(file.filename));
           // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else if (filter === 'VIDEOS') {
-          const filterFiles = files.filter(file => onlyVideos.test(file.name));
+          const filterFiles = files.filter(file => onlyVideos.test(file.filename));
           // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
-          const filterFiles = files.filter(file => AllMedia.test(file.name));
-          // console.log({filterFiles});
+          const filterFiles = files.filter(file => AllMedia.test(file.filename));
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
         setLoading(false);
+        // console.log({filterFiles});
       }
     } catch (error) {
       setLoading(false);
@@ -299,7 +302,7 @@ const SavedScreen = ({navigation}) => {
           scrollIndicatorInsets={{right: 2}}
           numColumns={2}
           data={sortedData}
-          keyExtractor={item => item.name}
+          keyExtractor={item => item.name+item.lastModified}
           renderItem={({item}) => (
             <StatusView
               item={item}
@@ -308,6 +311,7 @@ const SavedScreen = ({navigation}) => {
               setStatuses={setStatuses}
               navigation={navigation}
               statuses={statuses}
+              getStatuses={getStatuses}
             />
           )}
         />

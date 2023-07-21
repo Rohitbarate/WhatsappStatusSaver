@@ -1,4 +1,5 @@
 package com.wistatussaver;
+import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -21,8 +22,9 @@ public class MyAppPackage implements ReactPackage {
         List<NativeModule> modules = new ArrayList<>()
                 ;
         modules.add(new ScopedStorage(reactContext));
-        modules.add(new CalendarModule(reactContext));
         return modules;
     }
+
+
 
 }

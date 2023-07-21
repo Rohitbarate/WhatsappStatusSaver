@@ -27,10 +27,12 @@ import {
 import CurrentMediaScreen from './CurrentMediaScreen';
 import SelectedStatus from './SelectedStatus';
 const {CalendarModule, ScopedStorage} = NativeModules;
+import * as ScopedStoragePackage from "react-native-scoped-storage"
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const RecentScreen = ({navigation}) => {
-  const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
+  const [isAccessGranted, setIsAccessGranted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('ALL'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [statuses, setStatuses] = useState({
@@ -46,7 +48,7 @@ const RecentScreen = ({navigation}) => {
 
   useEffect(() => {
 
-    setLoading(true)
+    // setLoading(true)
     getStatuses();
 
     const backAction = () => {
@@ -78,33 +80,28 @@ const RecentScreen = ({navigation}) => {
 
   const WhatsAppStatusDirectory = `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
 
+  // console.log(WhatsAppStatusDirectory);
+
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
   const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
 
   const getStatuses = async () => {
-    try {
-      setLoading(true);
-      const result = await checkMultiple([
-        PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
-        PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-         PERMISSIONS.ANDROID.MANAGE_EXTERNAL_STORAGE,
-      ]);
+    setLoading(true)
+    const {hasAccess,folderUrl} = await getData()
+    const persistedUris = await ScopedStoragePackage.getPersistedUriPermissions();
+    setIsAccessGranted(hasAccess)
+    const data = await RNFS.readDir('file:///data/user/0/com.wistatussaver/files/Media/Statuses/')
+    console.log({persistedUris});
+    try{
+      if(hasAccess && persistedUris.length !== 0 ){
+        // setIsAccessGranted(true);
+        // console.log("fetch statuses");
+        ToastAndroid.show('Fetching New Statuses...',ToastAndroid.LONG)
+        const files = await ScopedStoragePackage.listFiles(persistedUris[0],'ascii');
      
-      if (
-        result[PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE] !==
-          RESULTS.GRANTED ||
-        result[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] !== RESULTS.GRANTED 
-        // result[PERMISSIONS.ANDROID.MANAGE_EXTERNAL_STORAGE] !== RESULTS.GRANTED
-      ) {
-        console.log('false');
-        setIsAllPermissionGranted(false);
-        setLoading(false);
-      } else {
-        console.log('true');
-        setIsAllPermissionGranted(true);
-        const files = await RNFS.readDir(WhatsAppStatusDirectory);
-        console.log(files);
+        // const files = await RNFS.readDir(decodeURIComponent(persistedUris[0]))
+        // console.log({files});
         if (filter === 'IMAGES') {
           const filterFiles = files.filter(file => onlyImages.test(file.name));
           // console.log({filterFiles});
@@ -118,55 +115,61 @@ const RecentScreen = ({navigation}) => {
           // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
-        setLoading(false);
+        setLoading(false)
+      }else{
+        setLoading(false)
+        // setIsAccessGranted(false);
       }
+    
     } catch (error) {
       setLoading(false);
       console.log({getAllStatuses_error: {error}});
     }
   };
 
-  const requestPermissions = async () => {
+  
+  const storeData = async value => {
     try {
-      return PermissionsAndroid.requestMultiple([
-        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        // PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
-      ])
-        .then(result => {
-          if (
-            // result['android.permission.READ_MEDIA_IMAGES'] &&
-            // result['android.permission.READ_MEDIA_VIDEO'] &&
-            // result['android.permission.READ_MEDIA_AUDIO'] &&
-            result['android.permission.READ_EXTERNAL_STORAGE'] &&
-            // result['android.permission.MANAGE_EXTERNAL_STORAGE'] &&
-            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
-          ) {
-            console.log('permission granted');
-            setIsAllPermissionGranted(true);
-            //   loadStatuses();
-            return true;
-          } else if (
-            // result['android.permission.READ_MEDIA_IMAGES'] ||
-            // result['android.permission.READ_MEDIA_VIDEO'] ||
-            // result['android.permission.READ_MEDIA_AUDIO'] ||
-            result['android.permission.READ_EXTERNAL_STORAGE'] ||
-            // result['android.permission.MANAGE_EXTERNAL_STORAGE'] ||
-            result['android.permission.WRITE_EXTERNAL_STORAGE'] ===
-              'never_ask_again'
-          ) {
-            setIsAllPermissionGranted(false);
-            ToastAndroid.show(
-              'Please Go into Settings -> Applications -> APP_NAME -> Permissions and Allow permissions to continue',
-              ToastAndroid.LONG,
-            );
-            return false;
-          }
-        })
-        .catch(err => console.log(err));
+      // value :{hasAccess:boolean,folderUrl:String}
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem('folderAccess', jsonValue);
+      return;
+    } catch (e) {
+      console.log('error while storing folder address : ', e);
+    }
+  };
+
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('folderAccess');
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      console.log('error while getting folder address : ', e);
+    }
+  };
+
+  const requestAccess = async () => {
+    try {
+      const res = await ScopedStorage.requestAccessToStatusesFolder();
+      console.log({res});
+      if (
+        res !== null &&
+        res.includes(
+          'Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses',
+        )
+      ) {
+        setIsAccessGranted(true);
+        ToastAndroid.show('Access Granted !', ToastAndroid.SHORT);
+        await AsyncStorage.setItem('folderUri', res);
+        await AsyncStorage.setItem('hasAccess', 'true');
+      } else {
+        setIsAccessGranted(false);
+        await AsyncStorage.setItem('hasAccess', 'false');
+        ToastAndroid.show(
+          ' You Selected Wrong Folder ! , please select ".Statuses" folder ',
+          ToastAndroid.LONG,
+        );
+      }
     } catch (error) {
       console.log({error});
     }
@@ -310,7 +313,7 @@ const RecentScreen = ({navigation}) => {
         </View>
       )}
 
-      {!isAllPermissionGranted && (
+      {/* {!isAccessGranted && (
         <Modal animationType="slide" transparent={true}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -325,14 +328,14 @@ const RecentScreen = ({navigation}) => {
                 App Needs Storage Permission to download your whatsapp statuses
               </Text>
               <TouchableOpacity
-                onPress={requestPermissions}
+                onPress={requestAccess}
                 style={styles.prmBtn}>
                 <Text style={styles.prmBtnText}>Grant Permission</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
-      )}
+      )} */}
 
       {statuses.allStatuses.length !== 0 ? (
         <FlatList

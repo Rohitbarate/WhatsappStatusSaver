@@ -6,9 +6,13 @@ import {
   ImageBackground,
   Dimensions,
   TouchableOpacity,
+  ToastAndroid,
+  Alert,
 } from 'react-native';
 import React from 'react';
 import Icon from 'react-native-vector-icons/AntDesign';
+import * as ScopedStorage from 'react-native-scoped-storage';
+import RNFS from 'react-native-fs';
 
 const StatusView = ({
   item,
@@ -16,22 +20,74 @@ const StatusView = ({
   setStatuses,
   navigation,
   statuses,
+  getStatuses,
 }) => {
-  // console.log({item});
   const {height, width} = Dimensions.get('window');
+
+  const WhatsAppStatusDirectory = `/storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
+
+  console.log({item});
+
+  const status = {
+    fileName: item.name || item.filename,
+    filePath: item.path ? `file://${item.path}` : item.uri,
+  };
+
+  const deleteStatus = async () => {
+    if (!item.path) {
+      ToastAndroid.show(
+        'You can not delete unsaved statuses',
+        ToastAndroid.SHORT,
+      );
+    } else {
+      Alert.alert(
+        '',
+        "Delete status?",
+        [
+          {
+            text: 'cancel',
+            
+          },
+          {
+            text: 'delete',
+            onPress: async () => {
+              await RNFS.unlink(
+                RNFS.DocumentDirectoryPath + '/Media/Statuses/' + item.filename,
+              )
+                .then(() => {
+                  getStatuses();
+                  console.log('FILE DELETED');
+                })
+                .catch(err => {
+                  console.log(err.message);
+                });
+            },
+          },
+        ],
+        {
+          cancelable: true,
+        },
+      );
+    }
+  };
+
   return (
     <TouchableOpacity
       onPress={() => {
         setStatuses(prevState => ({
           ...prevState,
-          currentMedia: item.path,
+          currentMedia: item.uri || item.path,
           mediaName: item.name,
         }));
         setIsCrntStatusVisible(true);
-        navigation.push('SelectedStatusScreen', {
-          uri: item.path,
-          statusName: item.name,
+        navigation.navigate('SelectedStatusScreen', {
+          uri: status.filePath,
+          statusName: status.fileName,
+          item,
         });
+      }}
+      onLongPress={async () => {
+        deleteStatus();
       }}>
       <View style={[styles.outerView, {width: width / 2.3}]}>
         <Image
@@ -41,10 +97,16 @@ const StatusView = ({
             resizeMode: 'cover',
             aspectRatio: 1,
           }}
-          source={{uri: `file://${item.path}`}}
+          source={{uri: status.filePath}}
         />
-        {item.name.indexOf('.jpg' || '.jpeg' || '.png') === -1 && (
-          <View style={{position:'absolute',alignSelf:'center',backgroundColor:'#fff',borderRadius:50}}>
+        {status.fileName.indexOf('.jpg' || '.jpeg' || '.png') === -1 && (
+          <View
+            style={{
+              position: 'absolute',
+              alignSelf: 'center',
+              backgroundColor: '#fff',
+              borderRadius: 50,
+            }}>
             <Icon name="play" color="#131313c7" size={50} />
           </View>
         )}

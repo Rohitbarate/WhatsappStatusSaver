@@ -205,3 +205,160 @@ String path = Environment.getExternalStorageDirectory() + "/Android/media/com.wh
         } catch (ActivityNotFoundException ignored) {
 
         }
+
+
+
+
+
+recent screen
+
+        try {
+      setLoading(true);
+    const persistedUris = await ScopedStoragefiles.getPersistedUriPermissions();
+    const All_statuses = await ScopedStoragefiles.listFiles(persistedUris[0])
+    console.log({All_statuses});
+      // const result = await checkMultiple([
+      //   PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+      //   PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
+      //    PERMISSIONS.ANDROID.MANAGE_EXTERNAL_STORAGE,
+      // ]);
+     
+      if (
+        // result[PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE] !==
+        //   RESULTS.GRANTED ||
+        // result[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] !== RESULTS.GRANTED 
+        // result[PERMISSIONS.ANDROID.MANAGE_EXTERNAL_STORAGE] !== RESULTS.GRANTED
+        All_statuses.length === 0
+      ) {
+        console.log('false');
+        setIsAllPermissionGranted(false);
+        setLoading(false);
+      } else {
+        console.log('true');
+        setIsAllPermissionGranted(true);
+        // const files = await RNFS.readDir(WhatsAppStatusDirectory);
+        // console.log(files);
+        if (filter === 'IMAGES') {
+          const filterFiles = All_statuses.filter(file => onlyImages.test(file.name));
+          // console.log({filterFiles});
+          setStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        } else if (filter === 'VIDEOS') {
+          const filterFiles = All_statuses.filter(file => onlyVideos.test(file.name));
+          // console.log({filterFiles});
+          setStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        } else {
+          const filterFiles = All_statuses.filter(file => AllMedia.test(file.name));
+          // console.log({filterFiles});
+          setStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        }
+        setLoading(false);
+      }
+
+
+
+
+      return PermissionsAndroid.requestMultiple([
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        // PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
+      ])
+        .then(result => {
+          if (
+            // result['android.permission.READ_MEDIA_IMAGES'] &&
+            // result['android.permission.READ_MEDIA_VIDEO'] &&
+            // result['android.permission.READ_MEDIA_AUDIO'] &&
+            result['android.permission.READ_EXTERNAL_STORAGE'] &&
+            // result['android.permission.MANAGE_EXTERNAL_STORAGE'] &&
+            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+          ) {
+            console.log('permission granted');
+            setIsAccessGranted(true);
+            //   loadStatuses();
+            return true;
+          } else if (
+            // result['android.permission.READ_MEDIA_IMAGES'] ||
+            // result['android.permission.READ_MEDIA_VIDEO'] ||
+            // result['android.permission.READ_MEDIA_AUDIO'] ||
+            result['android.permission.READ_EXTERNAL_STORAGE'] ||
+            // result['android.permission.MANAGE_EXTERNAL_STORAGE'] ||
+            result['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+              'never_ask_again'
+          ) {
+            setIsAccessGranted(false);
+            ToastAndroid.show(
+              'Please Go into Settings -> Applications -> APP_NAME -> Permissions and Allow permissions to continue',
+              ToastAndroid.LONG,
+            );
+            return false;
+          }
+        })
+        .catch(err => console.log(err));
+
+
+
+
+
+        /storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/
+
+
+
+
+
+         const getAccess = async () => {
+      try {
+        setAccessLoading(true);
+        const folderUri = await AsyncStorage.getItem('folderUri');
+        // folderUri = JSON.parse(folderUri);
+        console.log({folderUri});
+
+        const persistedUris =
+          await ScopedStoragePackage.getPersistedUriPermissions();
+        if (
+          folderUri !== null &&
+          persistedUris.length !== 0 &&
+          persistedUris[0].includes(folderUri) !== -1
+        ) {
+          setAccessLoading(false);
+          await AsyncStorage.setItem('hasAccess', 'true');
+          console.log({access: 'granted'});
+          ToastAndroid.show('Access Granted !', ToastAndroid.SHORT);
+        } else {
+         (persistedUris[0])
+          // setAccessLoading(true);
+          await AsyncStorage.setItem('hasAccess', 'false');
+          ToastAndroid.show(
+            'Provide access to ".Statuses" folder !',
+            ToastAndroid.SHORT,
+          );
+          console.log({access: 'denied'});
+
+          const res = await ScopedStorage.requestAccessToStatusesFolder();
+          console.log({res});
+          if (
+            res !== null &&
+            res.includes(
+              'Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses',
+            )
+          ) {
+            ToastAndroid.show('Access Granted !', ToastAndroid.SHORT);
+            await AsyncStorage.setItem('folderUri', res);
+            await AsyncStorage.setItem('hasAccess', 'true');
+          } else {
+            await AsyncStorage.setItem('hasAccess', 'false');
+            ToastAndroid.show(
+              ' You Selected Wrong Folder ! , please select ".Statuses" folder ',
+              ToastAndroid.LONG,
+            );
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    content://com.android.externalstorage.documents/tree/01F6-AC3F%3APodcasts/document/01F6-AC3F%3APodcasts%2Fesgi0q1Pm.mp3
+
+    "content://com.android.externalstorage.documents/tree/primary%3AAndroid/media/com.whatsapp/WhatsApp/Media/.Statuses/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses%2Fcdacb2952f96422790168cb970dd6e20.jpg",

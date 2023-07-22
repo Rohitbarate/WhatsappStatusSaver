@@ -20,6 +20,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {ActivityIndicator} from 'react-native-paper';
+import RootNavigator from './src/navigation/RootNavigator';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -53,12 +54,12 @@ const App = () => {
         if (folderAccess === null && persistedUris.length === 0) {
           // user is new
           setAccessLoading(false);
-          console.log('if');
+          // console.log('if');
           setShowDialogue(true);
         } else {
-          console.log('else');
+          // console.log('else');
           if (folderAccess !== null && persistedUris.length !== 0) {
-            console.log('access');
+            // console.log('access');
             setAccessLoading(false);
             setShowDialogue(false);
             ToastAndroid.show(
@@ -112,8 +113,7 @@ const App = () => {
     try {
       setAccessLoading(true);
       const res = await ScopedStorage.requestAccessToStatusesFolder();
-      // const res = await ScopedStoragePackage.openDocumentTree(false);
-      console.log({mainRes: res});
+      // console.log({mainRes: res});
       if (res !== null && res.includes('.Statuses')) {
         // user selected correct folder
         await storeData({hasAccess: true, folderUrl: res});
@@ -123,7 +123,6 @@ const App = () => {
         setShowDialogue(false);
       } else {
         // user selected wrong folder
-        console.log('else');
         ToastAndroid.show(
           'You might select the wrong folder !',
           ToastAndroid.LONG,
@@ -219,7 +218,7 @@ const App = () => {
         </View>
       )}
 
-      <Tab.Navigator
+      {/* <Tab.Navigator
         id="rootTab"
         initialRouteName="Home"
         activeColor="#25D366"
@@ -249,7 +248,8 @@ const App = () => {
             ),
           }}
         />
-      </Tab.Navigator>
+      </Tab.Navigator> */}
+      <RootNavigator />
     </NavigationContainer>
   );
 };

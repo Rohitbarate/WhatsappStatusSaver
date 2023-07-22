@@ -16,12 +16,12 @@ import {
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import RNFetchBlob from 'rn-fetch-blob';
+import FilterBtn from '../components/FilterBtn';
 
 const SavedScreen = ({navigation}) => {
   const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('ALL'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [statuses, setStatuses] = useState({
     allStatuses: [],
     currentMedia: '',
@@ -63,7 +63,7 @@ const SavedScreen = ({navigation}) => {
     return () => backHandler.remove();
   }, [filter]);
 
-  const WhatsAppStatusDirectory = `${RNFetchBlob.fs.dirs.DocumentDir}/Media/Statuses/`;
+  const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
@@ -79,22 +79,21 @@ const SavedScreen = ({navigation}) => {
         setLoading(false);
       } else {
         setIsAllPermissionGranted(true);
-        const files = await RNFetchBlob.fs.lstat(WhatsAppStatusDirectory)
+        const files = await RNFS.readDir(WhatsAppStatusDirectory);
         console.log({files});
-        if (filter === 'IMAGES') {
-          const filterFiles = files.filter(file => onlyImages.test(file.filename));
+        if (filter === 'Images') {
+          const filterFiles = files.filter(file => onlyImages.test(file.name));
           // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        } else if (filter === 'VIDEOS') {
-          const filterFiles = files.filter(file => onlyVideos.test(file.filename));
-          // console.log({filterFiles});
+        } else if (filter === 'Videos') {
+          const filterFiles = files.filter(file => onlyVideos.test(file.name));
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
-          const filterFiles = files.filter(file => AllMedia.test(file.filename));
+          const filterFiles = files.filter(file => AllMedia.test(file.name));
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
+          console.log({filterFiles});
         }
         setLoading(false);
-        // console.log({filterFiles});
       }
     } catch (error) {
       setLoading(false);
@@ -148,24 +147,11 @@ const SavedScreen = ({navigation}) => {
     }
   };
 
-  //   media filter logic start
-
-  const handlePress = () => {
-    setFilterModalVisible(!filterModalVisible);
-  };
-
-  const handleFilter = filterOption => {
-    setFilter(filterOption);
-    setFilterModalVisible(false);
-    handleScrollToTop();
-  };
-
   const handleScrollToTop = () => {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({offset: 0, animated: true});
     }
   };
-  //   media filter logic end
 
   const currentTime = new Date();
 
@@ -185,88 +171,17 @@ const SavedScreen = ({navigation}) => {
         alignItems: 'center',
         // paddingHorizontal:10
       }}>
-      {/* filter btn */}
-      <View
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          padding: 10,
-          justifyContent: 'center',
-          width: width,
-        }}>
-        <TouchableOpacity
-          style={{
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            flexDirection: 'row',
-          }}
-          onPress={handlePress}>
-          <Text style={{color: '#000'}}>{filter}</Text>
-          <MaterialCommunityIcons name={'filter'} size={24} color={'#000'} />
-        </TouchableOpacity>
-        <Modal visible={filterModalVisible} animationType="fade" transparent>
-          <TouchableOpacity
-            style={{flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)'}}
-            onPress={() => setFilterModalVisible(false)}>
-            <View
-              style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: 'grey',
-                position: 'absolute',
-                right: 20,
-                top: 80,
-                borderRadius: 10,
-                overflow: 'hidden',
-                borderWidth: 1,
-                borderTopRightRadius: 0,
-              }}>
-              <View
-                style={{
-                  backgroundColor: 'white',
-                  paddingHorizontal: 10,
-                  paddingBottom: 10,
-                }}>
-                <TouchableOpacity
-                  style={{marginTop: 10}}
-                  onPress={() => handleFilter('IMAGES')}>
-                  <Text style={{color: '#000'}}>Images</Text>
-                </TouchableOpacity>
-                <View
-                  style={{backgroundColor: 'grey', height: 1, marginTop: 5}}
-                />
-
-                <TouchableOpacity
-                  style={{marginTop: 10}}
-                  onPress={() => handleFilter('VIDEOS')}>
-                  <Text style={{color: '#000'}}>Videos</Text>
-                </TouchableOpacity>
-                <View
-                  style={{backgroundColor: 'grey', height: 1, marginTop: 5}}
-                />
-                <TouchableOpacity
-                  style={{marginTop: 10}}
-                  onPress={() => handleFilter('ALL')}>
-                  <Text style={{color: '#000'}}>All Media</Text>
-                </TouchableOpacity>
-                <View
-                  style={{backgroundColor: 'grey', height: 1, marginTop: 5}}
-                />
-                {/* Add more filter options as needed */}
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-      </View>
-
-      {/* {statuses.currentMedia && (
-        <CurrentMediaScreen
-          isCrntStatusVisible={isCrntStatusVisible}
-          setIsCrntStatusVisible={setIsCrntStatusVisible}
-          status={statuses}
-          setStatuses={setStatuses}
+      <View style={{justifyContent:'space-between',alignItems:'center',flexDirection:'row',padding: 10,width:width}}>
+        <Text style={{color:'#000000',fontWeight:'400',fontSize:13}}>{sortedData.length} items in total</Text>
+        {/* filter btn */}
+        <FilterBtn
+          filterModalVisible={filterModalVisible}
+          setFilterModalVisible={setFilterModalVisible}
+          filter={filter}
+          setFilter={setFilter}
+          handleScrollToTop={handleScrollToTop}
         />
-      )} */}
+      </View>
 
       {/* {!isAllPermissionGranted && (
         <Modal animationType="slide" transparent={true}>
@@ -302,7 +217,7 @@ const SavedScreen = ({navigation}) => {
           scrollIndicatorInsets={{right: 2}}
           numColumns={2}
           data={sortedData}
-          keyExtractor={item => item.name+item.lastModified}
+          keyExtractor={item => item.name + item.lastModified}
           renderItem={({item}) => (
             <StatusView
               item={item}
@@ -317,7 +232,12 @@ const SavedScreen = ({navigation}) => {
         />
       ) : (
         <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>Status not available. </Text>
+          <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
+            Downloaded status not found,
+          </Text>
+          <Text style={{color: '#00000080', fontSize: 14}}>
+            Download statuses from RECENT screen{' '}
+          </Text>
         </View>
       )}
     </View>

@@ -14,19 +14,44 @@ import Share from 'react-native-share';
 import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
-import RNFetchBlob from 'rn-fetch-blob';
 
 const SelectedStatus = ({route, navigation}) => {
   const {uri, statusName, item} = route.params;
-  // const URI = JSON.parse(uri)
 
-  // const WhatsAppStatusDirectory = `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
-
-  // const WhatsAppStatusDirectory = `${RNFetchBlob.fs.dirs.SDCardDir}/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
   console.log({URIFROMSAVED: uri});
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
+
+  useEffect(() => {
+
+
+    const backAction = () => {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        Alert.alert(
+          'Exit App',
+          'Are you sure you want to exit?',
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Exit', onPress: () => BackHandler.exitApp()},
+          ],
+          {cancelable: false},
+        );
+      }
+
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    // Cleanup the event listener when the component is unmounted
+    return () => backHandler.remove();
+  }, []);
 
   const handleShareToWhatsapp = async url => {
    let link;
@@ -61,32 +86,6 @@ const SelectedStatus = ({route, navigation}) => {
      
     } catch (error) {
       console.error('Error sharing to WhatsApp:', error.message);
-    }
-  };
-
-  const listFiles = async () => {
-    const contentUri =
-      'content://com.android.externalstorage.documents/tree/primary:Android/media/com.whatsapp/WhatsApp/Media/.Statuses';
-
-    try {
-      const res = await RNFetchBlob.config({
-        fileCache: true,
-      }).ls(contentUri);
-      console.log({res});
-      const files = res.map(file => ({
-        path: file.path(),
-        name:
-          Platform.OS === 'android'
-            ? file.filename()
-            : file.path().split('/').pop(),
-        size: file.size(),
-        mime: file.type(),
-      }));
-
-      console.log(files);
-      // Use the file list as needed
-    } catch (error) {
-      console.log('Error:', error);
     }
   };
 

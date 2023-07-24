@@ -26,12 +26,10 @@ const RootNavigator = () => {
         drawerType: 'slide',
         drawerActiveBackgroundColor: '#0d5a61',
         drawerActiveTintColor: '#25f795',
+        headerShadowVisible:false,
         headerStyle: {
           // height: 50,
-          shadowOpacity: 0,
-          shadowOffset: 0,
           backgroundColor: '#074e54',
-          shadowColor: '#074e54',
         },
         headerTitleStyle: {
           fontSize: 20,
@@ -57,11 +55,11 @@ const RootNavigator = () => {
               color={color}
             />
           ),
-          headerStyle: {
-            backgroundColor: '#074e54',
-            shadowColor: '#074e54',
-            // height: 50,
-          },
+          // headerStyle: {
+          //   backgroundColor: '#074e54',
+          //   shadowColor: '#074e54',
+          //   // height: 50,
+          // },
           headerTitle: 'Whatsapp status saver',
          
           title: 'Whatsapp',

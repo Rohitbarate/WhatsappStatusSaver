@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import React from 'react';
-import Icon from 'react-native-vector-icons/AntDesign';
+import Icon from 'react-native-vector-icons/Ionicons';
 import * as ScopedStorage from 'react-native-scoped-storage';
 import RNFS from 'react-native-fs';
 
@@ -74,6 +74,7 @@ const StatusView = ({
 
   return (
     <TouchableOpacity
+    activeOpacity={0.6}
       onPress={() => {
         setStatuses(prevState => ({
           ...prevState,
@@ -110,7 +111,7 @@ const StatusView = ({
               borderRadius: 55,
               opacity:0.8
             }}>
-            <Icon style={{backfaceVisibility:'visible',opacity:1}} name="playcircleo" color="#fff" size={50} />
+            <Icon style={{backfaceVisibility:'visible',opacity:1,paddingLeft:6}} name="play-sharp" color="#fff" size={45} />
           </View>
         )}
       </View>

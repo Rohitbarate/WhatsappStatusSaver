@@ -287,7 +287,12 @@ const RecentScreen = ({navigation}) => {
         />
       ) : (
         <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>Status not available. </Text>
+          <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
+            Status not found,
+          </Text>
+          <Text style={{color: '#00000080', fontSize: 14}}>
+            See statuses in whatsapp app
+          </Text>
         </View>
       )}
     </View>

@@ -336,7 +336,7 @@ const SelectedStatus = ({route, navigation}) => {
                     isVideoEnded
                       ? 'reload'
                       : isVideoPaused
-                      ? 'play'
+                      ? 'play-sharp'
                       : 'pause-outline'
                   }
                   size={50}

@@ -24,11 +24,15 @@ const HomeScreen = () => {
         tabBarStyle: {
           backgroundColor: '#074e54',
           display: getTabBarVisibility(route) ? 'flex' : 'none',
-          height:40
+          // height:40
         },
         tabBarShowIcon: true,
         tabBarIndicatorStyle: {backgroundColor: '#25D366'},
-      })}>
+        
+      })}
+      initialRouteName='Recent'
+      backBehavior='history'
+      >
       <TopTabBar.Screen
         name="Recent"
         component={RecentScreenStack}
@@ -39,6 +43,7 @@ const HomeScreen = () => {
             //   ),
           }
         }
+        
       />
       <TopTabBar.Screen
         name="Saved"

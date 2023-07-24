@@ -1,4 +1,4 @@
-import {View, Text,TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import React from 'react';
 // import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import {createDrawerNavigator} from '@react-navigation/drawer';
@@ -24,20 +24,25 @@ const RootNavigator = () => {
       screenOptions={{
         drawerPosition: 'left',
         drawerType: 'slide',
-        headerStyle:{
-          height:60,
-          shadowOpacity:0,
-          shadowOffset:0,
-        
+        drawerActiveBackgroundColor: '#0d5a61',
+        drawerActiveTintColor: '#25f795',
+        headerStyle: {
+          // height: 50,
+          shadowOpacity: 0,
+          shadowOffset: 0,
+          backgroundColor: '#074e54',
+          shadowColor: '#074e54',
         },
-        headerTitleStyle:{
-          color:'#fff'
+        headerTitleStyle: {
+          fontSize: 20,
+          fontWeight: '300',
+          color: '#fff',
+          fontStyle: 'italic',
         },
-        headerTintColor:'#fff',
+        headerTintColor: '#fff',
       }}>
       <Drawer.Screen
         name="Whatsapp"
-        
         component={HomeScreen}
         options={{
           drawerIcon: ({color, size, focused}) => (
@@ -52,21 +57,15 @@ const RootNavigator = () => {
               color={color}
             />
           ),
-          headerStyle:{
-            backgroundColor:'#074e54',
-            shadowColor:'#074e54',
-            height:50,
+          headerStyle: {
+            backgroundColor: '#074e54',
+            shadowColor: '#074e54',
+            // height: 50,
           },
-          headerTitle:'Whatsapp status saver',
-          headerTitleStyle:{
-            fontSize:20,
-            fontWeight:'300',
-            color:'#fff',
-            fontStyle:'italic'
-          },
-          title:'Whatsapp',
-          lazy:false,
+          headerTitle: 'Whatsapp status saver',
          
+          title: 'Whatsapp',
+          lazy: false,
         }}
       />
       <Drawer.Screen
@@ -85,10 +84,10 @@ const RootNavigator = () => {
               color={color}
             />
           ),
-          headerStyle:{
-            backgroundColor:'#ff8800',
-            shadowColor:'#ff8800',
-          }
+          headerStyle: {
+            backgroundColor: '#ff8800',
+            shadowColor: '#ff8800',
+          },
         }}
       />
       <Drawer.Screen
@@ -107,17 +106,14 @@ const RootNavigator = () => {
               color={color}
             />
           ),
-          headerStyle:{
-            backgroundColor:'#075e54',
-            shadowColor:'#075e54',
-          }
         }}
       />
       <Drawer.Screen
         name="Privacy Policy"
         component={PolicyScreen}
         options={{
-          title:'privacyPolicy',
+          title: 'privacyPolicy',
+          headerTitle:'Privacy & Policy',
           drawerIcon: ({color, size, focused}) => (
             <Icon2
               style={{
@@ -130,10 +126,6 @@ const RootNavigator = () => {
               color={color}
             />
           ),
-          headerStyle:{
-            backgroundColor:'#075e54',
-            shadowColor:'#075e54',
-          }
         }}
       />
       <Drawer.Screen
@@ -152,10 +144,6 @@ const RootNavigator = () => {
               color={color}
             />
           ),
-          headerStyle:{
-            backgroundColor:'#075e54',
-            shadowColor:'#075e54',
-          }
         }}
       />
     </Drawer.Navigator>

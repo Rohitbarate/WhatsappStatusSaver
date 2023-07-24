@@ -74,8 +74,16 @@ const RecentScreen = ({navigation}) => {
       backAction,
     );
 
+    // const onScreenFocus = navigation.addListener('focus', () => {
+    //   getStatuses();
+    //   console.log('focus');
+    // });
+
     // Cleanup the event listener when the component is unmounted
-    return () => backHandler.remove();
+    return () => {
+      // onScreenFocus;
+      backHandler.remove();
+    };
   }, [filter]);
 
   const onlyVideos = /\.(mp4)$/i;
@@ -110,7 +118,7 @@ const RecentScreen = ({navigation}) => {
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
           const filterFiles = files.filter(file => AllMedia.test(file.name));
-          // console.log({filterFiles});
+          console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
         setLoading(false);
@@ -180,11 +188,7 @@ const RecentScreen = ({navigation}) => {
   const currentTime = new Date();
 
   const sortedData = [...statuses.allStatuses].sort((a, b) => {
-    const timeA = new Date(a.mtime);
-    const timeB = new Date(b.mtime);
-    const differenceA = currentTime - timeA;
-    const differenceB = currentTime - timeB;
-    return differenceA - differenceB;
+    return b.lastModified - a.lastModified;
   });
 
   return (
@@ -277,6 +281,7 @@ const RecentScreen = ({navigation}) => {
               setStatuses={setStatuses}
               navigation={navigation}
               statuses={statuses}
+              getStatuses={getStatuses}
             />
           )}
         />

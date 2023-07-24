@@ -6,6 +6,7 @@ import {
   ToastAndroid,
   TouchableOpacity,
   Modal,
+  StatusBar,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {
@@ -21,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {ActivityIndicator} from 'react-native-paper';
 import RootNavigator from './src/navigation/RootNavigator';
+import SplashScreen from 'react-native-splash-screen';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -38,6 +40,7 @@ const App = () => {
   };
 
   useEffect(() => {
+    SplashScreen.hide();
     const getAccess = async () => {
       try {
         setAccessLoading(true);
@@ -153,6 +156,7 @@ const App = () => {
 
   return (
     <NavigationContainer>
+      <StatusBar backgroundColor={'#074e54'} barStyle={'light-content'} />
       {/* loading component */}
       {accessLoading && (
         <View

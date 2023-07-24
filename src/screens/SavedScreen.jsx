@@ -59,9 +59,17 @@ const SavedScreen = ({navigation}) => {
       backAction,
     );
 
+    const onScreenFocus = navigation.addListener('focus', () => {
+      getStatuses();
+      console.log('focus');
+    });
+
     // Cleanup the event listener when the component is unmounted
-    return () => backHandler.remove();
-  }, [filter]);
+    return () => {
+      onScreenFocus;
+      backHandler.remove();
+    };
+  }, [filter, navigation]);
 
   const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
 
@@ -171,8 +179,17 @@ const SavedScreen = ({navigation}) => {
         alignItems: 'center',
         // paddingHorizontal:10
       }}>
-      <View style={{justifyContent:'space-between',alignItems:'center',flexDirection:'row',padding: 10,width:width}}>
-        <Text style={{color:'#000000',fontWeight:'400',fontSize:13}}>{sortedData.length} items in total</Text>
+      <View
+        style={{
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexDirection: 'row',
+          padding: 10,
+          width: width,
+        }}>
+        <Text style={{color: '#000000', fontWeight: '400', fontSize: 13}}>
+          {sortedData.length} items in total
+        </Text>
         {/* filter btn */}
         <FilterBtn
           filterModalVisible={filterModalVisible}

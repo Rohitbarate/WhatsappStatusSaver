@@ -26,7 +26,7 @@ const StatusView = ({
 
   const WhatsAppStatusDirectory = `/storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
 
-  console.log({item});
+  // console.log({item});
 
   const status = {
     fileName: item.name || item.filename,
@@ -42,24 +42,25 @@ const StatusView = ({
     } else {
       Alert.alert(
         '',
-        "Delete status?",
+        'Delete status?',
         [
           {
             text: 'cancel',
-            
           },
           {
             text: 'delete',
             onPress: async () => {
               await RNFS.unlink(
-                RNFS.DocumentDirectoryPath + '/Media/Statuses/' + item.filename,
+                RNFS.DocumentDirectoryPath + '/Media/Statuses/' + item.name,
               )
                 .then(() => {
                   getStatuses();
                   console.log('FILE DELETED');
+                  ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
                 })
                 .catch(err => {
                   console.log(err.message);
+                  ToastAndroid.show(err.message, ToastAndroid.SHORT);
                 });
             },
           },
@@ -83,7 +84,8 @@ const StatusView = ({
         navigation.navigate('SelectedStatusScreen', {
           uri: status.filePath,
           statusName: status.fileName,
-          item,
+          mime: item.mime,
+          // getStatuses:getStatuses
         });
       }}
       onLongPress={async () => {
@@ -104,10 +106,11 @@ const StatusView = ({
             style={{
               position: 'absolute',
               alignSelf: 'center',
-              backgroundColor: '#fff',
-              borderRadius: 50,
+              backgroundColor: '#212121',
+              borderRadius: 55,
+              opacity:0.8
             }}>
-            <Icon name="play" color="#131313c7" size={50} />
+            <Icon style={{backfaceVisibility:'visible',opacity:1}} name="playcircleo" color="#fff" size={50} />
           </View>
         )}
       </View>

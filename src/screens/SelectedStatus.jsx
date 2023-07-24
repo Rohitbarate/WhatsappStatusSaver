@@ -5,28 +5,42 @@ import {
   Dimensions,
   BackHandler,
   Image,
-  TouchableOpacity,
+  // TouchableOpacity,
   ToastAndroid,
+  StatusBar,
+  LogBox,
+  Alert,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
+import ControlIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
 import RNFS from 'react-native-fs';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import Pinchable from 'react-native-pinchable';
 
 const SelectedStatus = ({route, navigation}) => {
-  const {uri, statusName, item} = route.params;
-
-  console.log({URIFROMSAVED: uri});
+  const {uri, statusName, mime} = route.params;
+  const [showControls, setShowControls] = useState(false);
+  const [videoProp, setVideoProp] = useState({});
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const [isVideoPaused, setIsVideoPaused] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
+  const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
+
+  // LogBox.ignoreLogs([
+  //   'Non-serializable values were found in the navigation state',
+  // ]);
 
   useEffect(() => {
+    checkIsSaved();
 
-
-    const backAction = () => {
+    function backAction() {
       if (navigation.canGoBack()) {
         navigation.goBack();
       } else {
@@ -42,7 +56,7 @@ const SelectedStatus = ({route, navigation}) => {
       }
 
       return true;
-    };
+    }
 
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -53,22 +67,39 @@ const SelectedStatus = ({route, navigation}) => {
     return () => backHandler.remove();
   }, []);
 
+  const videoRef = useRef(null);
+
+  const checkIsSaved = async () => {
+    const savedFiles = await RNFS.readdir(WhatsAppStatusDirectory);
+    console.log({savedFiles});
+    if (savedFiles) {
+      const res = savedFiles.indexOf(statusName);
+      if (res !== -1) {
+        console.log('saved');
+        setIsSaved(true);
+      } else {
+        console.log('not saved');
+      }
+    }
+  };
+
   const handleShareToWhatsapp = async url => {
-   let link;
+    let link;
     try {
-     
       Share.isPackageInstalled('com.whatsapp')
         .then(response => {
           console.log({response});
           response.isInstalled = true;
           if (response.isInstalled) {
             ToastAndroid.show('Sharing with Whatsapp', ToastAndroid.SHORT);
-            RNFS.stat(url).then((res)=>{
-              console.log({share:res})
-              link = res.path
-            }).catch((er)=>{
-              console.log({er});
-            })
+            RNFS.stat(url)
+              .then(res => {
+                console.log({share: res});
+                link = res.path;
+              })
+              .catch(er => {
+                console.log({er});
+              });
             Share.shareSingle({
               url: uri,
               social: Share.Social.WHATSAPP,
@@ -83,7 +114,6 @@ const SelectedStatus = ({route, navigation}) => {
           console.log(error);
           // { error }
         });
-     
     } catch (error) {
       console.error('Error sharing to WhatsApp:', error.message);
     }
@@ -119,7 +149,7 @@ const SelectedStatus = ({route, navigation}) => {
     console.log({
       sourceUrl,
       destUrl,
-      mime: item.mime,
+      mime,
     });
 
     try {
@@ -129,14 +159,6 @@ const SelectedStatus = ({route, navigation}) => {
       } else {
         createDestFile(sourceUrl, destUrl);
       }
-      // await ScopedStoragePackage.copyFile(
-      //   "content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses%2Fcdacb2952f96422790168cb970dd6e20.jpg",
-      //   `/data/user/0/com.wistatussaver/files/Media/Statuses/cdacb2952f96422790168cb970dd6e20.jpg`,
-      //   msg => {
-      //     console.log('ScopedStorage.copyFile msg: ', msg);
-      //     ToastAndroid.show(msg,ToastAndroid.SHORT)
-      //   },
-      // );
     } catch (error) {
       console.log({errorToDownload: error});
       ToastAndroid.show(error, ToastAndroid.SHORT);
@@ -148,16 +170,13 @@ const SelectedStatus = ({route, navigation}) => {
       const des = await ScopedStoragePackage.createFile(
         destUrl,
         statusName,
-        item.mime,
+        mime,
       );
       console.log({des});
       if (des.uri) {
         copyFileFunction(sourceUrl, des.uri);
       } else {
-        ToastAndroid.show(
-          'error to download file, try again',
-          ToastAndroid.SHORT,
-        );
+        ToastAndroid.show('Download failed, try again', ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log({error});
@@ -170,7 +189,63 @@ const SelectedStatus = ({route, navigation}) => {
     await ScopedStoragePackage.copyFile(fileStat.uri, destUrl, res => {
       console.log({res});
       ToastAndroid.show(res, ToastAndroid.SHORT);
+      checkIsSaved();
     });
+  };
+
+  const onVideoPlaying = props => {
+    setVideoProp(props);
+  };
+
+  const onReadyForDisplay = prop => {
+    setIsVideoEnded(false);
+    setShowControls(true);
+    hideControls();
+  };
+
+  const hideControls = () => {
+    const timerId = setTimeout(() => {
+      !isVideoEnded && setShowControls(false);
+    }, 5000);
+    isVideoEnded && clearTimeout(timerId);
+  };
+
+  const onVideoEnd = props => {
+    setIsVideoEnded(true);
+    setShowControls(true);
+    setIsVideoPaused(true);
+    videoRef.current.seek(-videoProp.seekableDuration);
+  };
+
+  const deleteStatusHandler = async (uri, statusName) => {
+    Alert.alert(
+      '',
+      'Delete status?',
+      [
+        {
+          text: 'cancel',
+        },
+        {
+          text: 'delete',
+          onPress: async () => {
+            await RNFS.unlink(WhatsAppStatusDirectory + statusName)
+              .then(() => {
+                console.log('FILE DELETED');
+                ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
+
+                navigation.goBack();
+              })
+              .catch(err => {
+                console.log(err.message);
+                ToastAndroid.show(err.message, ToastAndroid.SHORT);
+              });
+          },
+        },
+      ],
+      {
+        cancelable: true,
+      },
+    );
   };
 
   return (
@@ -179,27 +254,142 @@ const SelectedStatus = ({route, navigation}) => {
         <View
           style={{
             width: Dimensions.get('window').width - 20,
-            backgroundColor: 'red',
+            backgroundColor: 'grey',
             alignItems: 'center',
             height: 500,
             borderRadius: 10,
             overflow: 'hidden',
           }}>
-          <Image source={{uri: uri}} style={styles.image} />
+          <Pinchable>
+            <Image source={{uri: uri}} style={styles.image} />
+          </Pinchable>
         </View>
       ) : (
-        <Video
-          source={{uri: uri}}
-          style={styles.video}
-          controls={true}
-          //   fullscreen={true}
-          posterResizeMode="contain"
-          resizeMode="contain"
-        />
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {
+            setShowControls(!showControls);
+            !showControls && hideControls();
+          }}
+          style={styles.videoView}>
+          <StatusBar backgroundColor={'#074e54'} barStyle={'light-content'} />
+          <Video
+            ref={videoRef}
+            source={{uri: uri}}
+            style={styles.video}
+            repeat={isVideoEnded}
+            paused={isVideoPaused}
+            fullscreen={true}
+            posterResizeMode="contain"
+            resizeMode="contain"
+            onProgress={onVideoPlaying}
+            onEnd={props => onVideoEnd(props)}
+            onReadyForDisplay={onReadyForDisplay}
+          />
+          {showControls && (
+            <View style={styles.customControlView}>
+              {/* close status button */}
+              <View style={styles.customControlViewHeader}>
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.goBack();
+                  }}>
+                  <Icon
+                    style={{
+                      alignSelf: 'flex-end',
+                      paddingBottom: 10,
+                      paddingHorizontal: 10,
+                    }}
+                    name="close"
+                    size={30}
+                    color={'#fff'}
+                    onPress={() => {}}
+                  />
+                </TouchableOpacity>
+              </View>
+              {/* play/pause/reload  button */}
+              <TouchableOpacity
+                style={{
+                  alignSelf: 'center',
+                  backgroundColor: '#212121',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 60,
+                  width: 60,
+                  borderRadius: 60,
+                  opacity: 0.8,
+                  paddingLeft: 2,
+                }}
+                onPress={() => {
+                  setIsVideoPaused(!isVideoPaused);
+                  !showControls && hideControls();
+                  isVideoEnded && setIsVideoEnded(false);
+                }}>
+                <Icon
+                  style={{
+                    alignSelf: 'center',
+                    opacity: 1,
+                    // paddingBottom: 10,
+                    // paddingHorizontal: 10,
+                  }}
+                  name={
+                    isVideoEnded
+                      ? 'reload'
+                      : isVideoPaused
+                      ? 'play'
+                      : 'pause-outline'
+                  }
+                  size={50}
+                  color={'#ffffff'}
+                />
+              </TouchableOpacity>
+
+              {/* time & progress bar */}
+              <View style={styles.customControlViewFooter}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    paddingHorizontal: 10,
+                  }}>
+                  <Text style={{color: '#fff'}}>
+                    {videoProp.currentTime
+                      ? '00.' + Math.ceil(videoProp.currentTime)
+                      : '00.00'}
+                  </Text>
+                  <Text style={{color: '#fff'}}>
+                    {videoProp.seekableDuration
+                      ? '00.' + Math.ceil(videoProp.seekableDuration)
+                      : '00.00'}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: '100%',
+                    height: 5,
+                    backgroundColor: 'grey',
+                    marginTop: 5,
+                  }}>
+                  <View
+                    style={{
+                      height: '100%',
+                      width:
+                        (Math.ceil(videoProp.currentTime) /
+                          Math.ceil(videoProp.seekableDuration)) *
+                          100 +
+                        '%',
+                      backgroundColor: 'green',
+                    }}
+                  />
+                </View>
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
       )}
-      <View>
-        <Text style={{color: '#000'}}>{statusName}</Text>
-      </View>
+
       <View style={styles.btnView}>
         <TouchableOpacity
           onPress={() => handleShare(uri)}
@@ -210,12 +400,20 @@ const SelectedStatus = ({route, navigation}) => {
           <Icon name="ios-share-social-outline" size={30} color={'#fff'} />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => downloadStatusHandler(uri, statusName)}
+          onPress={() => {
+            isSaved
+              ? deleteStatusHandler(uri, statusName)
+              : downloadStatusHandler(uri, statusName);
+          }}
           style={[
             styles.button,
             {height: 65, width: 65, borderRadius: 65, marginHorizontal: 10},
           ]}>
-          <Icon name="ios-arrow-down" size={40} color={'#fff'} />
+          <Icon
+            name={isSaved ? 'trash-outline' : 'ios-arrow-down'}
+            size={40}
+            color={'#fff'}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleShareToWhatsapp(uri)}
@@ -248,13 +446,42 @@ const styles = StyleSheet.create({
     // borderRadius: 10,
     resizeMode: 'contain',
   },
+  videoView: {
+    borderRadius: 10,
+    height: 500,
+    overflow: 'hidden',
+    width: Dimensions.get('window').width - 20,
+  },
   video: {
     // aspectRatio:
     //   Dimensions.get('window').width / Dimensions.get('window').height,
     backgroundColor: '#000',
-    width: Dimensions.get('window').width - 20,
-    height: 500,
-    borderRadius: 10,
+    width: '100%',
+    height: '100%',
+  },
+  customControlView: {
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    backgroundColor: '#00000040',
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+  },
+  customControlViewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: '100%',
+  },
+  customControlViewFooter: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    // marginBottom: 10,
   },
   button: {
     backgroundColor: 'green',

@@ -18,24 +18,24 @@ import {
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   checkMultiple,
   PERMISSIONS,
   request,
   RESULTS,
 } from 'react-native-permissions';
-import CurrentMediaScreen from './CurrentMediaScreen';
-import SelectedStatus from './SelectedStatus';
-const {CalendarModule, ScopedStorage} = NativeModules;
+const {ScopedStorage} = NativeModules;
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FilterBtn from '../components/FilterBtn';
 
 const RecentScreen = ({navigation}) => {
+  const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
   const [isAccessGranted, setIsAccessGranted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [showDilogue, setShowDialogue] = useState(false);
   const [statuses, setStatuses] = useState({
     allStatuses: [],
     currentMedia: '',
@@ -48,6 +48,8 @@ const RecentScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
+    getAccess();
+    requestFileAccess();
     // setLoading(true)
     getStatuses();
 
@@ -99,9 +101,8 @@ const RecentScreen = ({navigation}) => {
 
     console.log({persistedUris});
     try {
-      if (hasAccess && persistedUris.length !== 0) {
-        // setIsAccessGranted(true);
-        // console.log("fetch statuses");
+      if (hasAccess && persistedUris.length !== 0 && folderUrl.length !== 0) {
+        console.log('fetch status');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
         const files = await ScopedStoragePackage.listFiles(
           persistedUris[0],
@@ -114,21 +115,71 @@ const RecentScreen = ({navigation}) => {
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else if (filter === 'Videos') {
           const filterFiles = files.filter(file => onlyVideos.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
           const filterFiles = files.filter(file => AllMedia.test(file.name));
-          console.log({filterFiles});
+          // console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         }
         setLoading(false);
       } else {
+        console.log('else');
         setLoading(false);
-        // setIsAccessGranted(false);
+        setIsAccessGranted(false);
       }
     } catch (error) {
       setLoading(false);
       console.log({getAllStatuses_error: {error}});
+    }
+  };
+
+  const getAccess = async () => {
+    try {
+      setAccessLoading(true);
+      //  await AsyncStorage.clear()
+      // get folder link stored in asyncStorage
+
+      const folderAccess = await getData();
+
+      // get access folder links stored in persistedUris
+      const persistedUris =
+        await ScopedStoragePackage.getPersistedUriPermissions();
+      console.log({persistedUris});
+
+      if (folderAccess === null && persistedUris.length === 0) {
+        // user is new
+        setAccessLoading(false);
+        // console.log('if');
+        setShowDialogue(true);
+      } else {
+        // console.log('else');
+        if (folderAccess !== null && persistedUris.length !== 0) {
+          // console.log('access');
+          setAccessLoading(false);
+          setShowDialogue(false);
+          // ToastAndroid.show(
+          //   'Welcome back to WIStatusSaver 🙋‍♂️🙋‍♂️',
+          //   ToastAndroid.SHORT,
+          // );
+        } else if (folderAccess !== null && persistedUris.length === 0) {
+          await AsyncStorage.clear();
+          setAccessLoading(false);
+          setShowDialogue(true);
+        } else {
+          await ScopedStoragePackage.releasePersistableUriPermission(
+            persistedUris[0],
+          );
+          setAccessLoading(false);
+          setShowDialogue(true);
+        }
+
+        // await AsyncStorage.clear();
+      }
+    } catch (error) {
+      console.log(error);
+      setAccessLoading(false);
+      setShowDialogue(true);
     }
   };
 
@@ -152,28 +203,81 @@ const RecentScreen = ({navigation}) => {
     }
   };
 
-  const requestAccess = async () => {
+  const requestScopedPermissionAccess = async () => {
     try {
+      setAccessLoading(true);
       const res = await ScopedStorage.requestAccessToStatusesFolder();
-      console.log({res});
-      if (
-        res !== null &&
-        res.includes(
-          'Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses',
-        )
-      ) {
-        setIsAccessGranted(true);
-        ToastAndroid.show('Access Granted !', ToastAndroid.SHORT);
-        await AsyncStorage.setItem('folderUri', res);
-        await AsyncStorage.setItem('hasAccess', 'true');
+      console.log({mainRes: res});
+      if (res !== null && res.includes('.Statuses')) {
+        // user selected correct folder
+        await storeData({hasAccess: true, folderUrl: res});
+        setAccessLoading(false);
+        ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
+        setAccessLoading(false);
+        setShowDialogue(false);
+        getStatuses();
       } else {
-        setIsAccessGranted(false);
-        await AsyncStorage.setItem('hasAccess', 'false');
+        // user selected wrong folder
         ToastAndroid.show(
-          ' You Selected Wrong Folder ! , please select ".Statuses" folder ',
+          'You might selected the wrong folder.',
           ToastAndroid.LONG,
         );
+        // get access folder links stored in persistedUris
+        const persistedUris =
+          await ScopedStoragePackage.getPersistedUriPermissions();
+        await ScopedStoragePackage.releasePersistableUriPermission(
+          persistedUris[0],
+        );
+        setAccessLoading(false);
+        setShowDialogue(true);
       }
+      // return res;
+    } catch (error) {
+      console.log({error});
+      const persistedUris =
+        await ScopedStoragePackage.getPersistedUriPermissions();
+      await ScopedStoragePackage.releasePersistableUriPermission(
+        persistedUris[0],
+      );
+      setAccessLoading(false);
+      setShowDialogue(true);
+      // return null;
+      ToastAndroid.show('Error !' + error, ToastAndroid.LONG);
+    }
+  };
+
+  const requestFileAccess = async () => {
+    try {
+      return PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ])
+        .then(result => {
+          if (
+            result['android.permission.READ_EXTERNAL_STORAGE'] ===
+            //  &&
+            // result['android.permission.WRITE_EXTERNAL_STORAGE']
+            'granted'
+          ) {
+            console.log('permission granted');
+            setIsAllPermissionGranted(true);
+            //   loadStatuses();
+            return true;
+          } else if (
+            result['android.permission.READ_EXTERNAL_STORAGE'] ===
+            //  ||
+            // result['android.permission.WRITE_EXTERNAL_STORAGE']
+            'never_ask_again'
+          ) {
+            setIsAllPermissionGranted(false);
+            ToastAndroid.show(
+              'Please Go into Settings -> Applications -> APP_NAME -> Permissions and Allow file permissions to continue',
+              ToastAndroid.LONG,
+            );
+            return false;
+          }
+        })
+        .catch(err => console.log(err));
     } catch (error) {
       console.log({error});
     }
@@ -185,7 +289,7 @@ const RecentScreen = ({navigation}) => {
     }
   };
 
-  const currentTime = new Date();
+  // const currentTime = new Date();
 
   const sortedData = [...statuses.allStatuses].sort((a, b) => {
     return b.lastModified - a.lastModified;
@@ -199,6 +303,75 @@ const RecentScreen = ({navigation}) => {
         alignItems: 'center',
         // paddingHorizontal:10
       }}>
+      {/* file loading component */}
+      {accessLoading && (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 100,
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: '#ffffff80',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              borderRadius: 10,
+              backgroundColor: '#075e54',
+            }}>
+            <ActivityIndicator color={'#fff'} size={30} />
+            <Text
+              style={{
+                color: '#fff',
+                fontWeight: '500',
+                fontSize: 16,
+                marginLeft: 10,
+              }}>
+              Checking Folder Access
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Access dilogue component */}
+
+      {showDilogue && !accessLoading && (
+        <View style={{flex: 1, position: 'absolute'}}>
+          <Modal animationType="slide" transparent={true}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text
+                  style={{
+                    color: '#000',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    textAlign: 'center',
+                    textTransform: 'capitalize',
+                  }}>
+                  App Needs Storage Permission to download your whatsapp
+                  statuses
+                </Text>
+                <TouchableOpacity
+                  onPress={requestScopedPermissionAccess}
+                  style={styles.prmBtn}>
+                  <Text style={styles.prmBtnText}>Grant Permission</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </View>
+      )}
+
       <View
         style={{
           justifyContent: 'space-between',
@@ -220,7 +393,7 @@ const RecentScreen = ({navigation}) => {
         />
       </View>
 
-      {loading && (
+      {loading && statuses.allStatuses.length === 0 && (
         <View
           style={{
             flex: 1,
@@ -237,30 +410,6 @@ const RecentScreen = ({navigation}) => {
           <ActivityIndicator color={'green'} size={30} />
         </View>
       )}
-
-      {/* {!isAccessGranted && (
-        <Modal animationType="slide" transparent={true}>
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text
-                style={{
-                  color: '#000',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  textAlign: 'center',
-                  textTransform: 'capitalize',
-                }}>
-                App Needs Storage Permission to download your whatsapp statuses
-              </Text>
-              <TouchableOpacity
-                onPress={requestAccess}
-                style={styles.prmBtn}>
-                <Text style={styles.prmBtnText}>Grant Permission</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )} */}
 
       {statuses.allStatuses.length !== 0 ? (
         <FlatList
@@ -286,14 +435,20 @@ const RecentScreen = ({navigation}) => {
           )}
         />
       ) : (
-        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
-            Status not found,
-          </Text>
-          <Text style={{color: '#00000080', fontSize: 14}}>
-            See statuses in whatsapp app
-          </Text>
-        </View>
+        !loading && !showDilogue &&(
+          <View
+            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
+              Status not found,
+            </Text>
+            <Text style={{color: '#00000080', fontSize: 14}}>
+              See statuses in whatsapp app
+            </Text>
+            <TouchableOpacity onPress={getStatuses} style={styles.prmBtn}>
+              <Text style={styles.prmBtnText}>Reload</Text>
+            </TouchableOpacity>
+          </View>
+        )
       )}
     </View>
   );

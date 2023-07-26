@@ -26,70 +26,71 @@ import SplashScreen from 'react-native-splash-screen';
 
 const Tab = createMaterialBottomTabNavigator();
 
-// const {ScopedStorage} = NativeModules;
-const {AccessStorage, ScopedStorage} = NativeModules;
+const {ScopedStorage} = NativeModules;
 
 const App = () => {
-  const [accessLoading, setAccessLoading] = useState(false);
-  const [showDilogue, setShowDialogue] = useState(false);
+  // const [accessLoading, setAccessLoading] = useState(false);
+  // const [showDilogue, setShowDialogue] = useState(false);
   // const [folderUrl, setFolderUrl] = useState(null);
-  const getTabBarVisibility = route => {
-    const routeName = getFocusedRouteNameFromRoute(route);
-    const hideOnScreens = ['SelectedStatusScreen'];
-    return hideOnScreens.indexOf(routeName) >= -1;
-  };
+
+  // const getTabBarVisibility = route => {
+  //   const routeName = getFocusedRouteNameFromRoute(route);
+  //   const hideOnScreens = ['SelectedStatusScreen'];
+  //   return hideOnScreens.indexOf(routeName) >= -1;
+  // };
 
   useEffect(() => {
     SplashScreen.hide();
-    const getAccess = async () => {
-      try {
-        setAccessLoading(true);
-        //  await AsyncStorage.clear()
-        // get folder link stored in asyncStorage
+    // const getAccess = async () => {
+    //   try {
+    //     setAccessLoading(true);
+    //     //  await AsyncStorage.clear()
+    //     // get folder link stored in asyncStorage
 
-        const folderAccess = await getData();
+    //     const folderAccess = await getData();
 
-        // get access folder links stored in persistedUris
-        const persistedUris =
-          await ScopedStoragePackage.getPersistedUriPermissions();
-        console.log({persistedUris});
+    //     // get access folder links stored in persistedUris
+    //     const persistedUris =
+    //       await ScopedStoragePackage.getPersistedUriPermissions();
+    //     console.log({persistedUris});
 
-        if (folderAccess === null && persistedUris.length === 0) {
-          // user is new
-          setAccessLoading(false);
-          // console.log('if');
-          setShowDialogue(true);
-        } else {
-          // console.log('else');
-          if (folderAccess !== null && persistedUris.length !== 0) {
-            // console.log('access');
-            setAccessLoading(false);
-            setShowDialogue(false);
-            ToastAndroid.show(
-              'Welcome back to WIStatusSaver 🙋‍♂️🙋‍♂️',
-              ToastAndroid.SHORT,
-            );
-          } else if (folderAccess !== null && persistedUris.length === 0) {
-            await AsyncStorage.clear();
-            setAccessLoading(false);
-            setShowDialogue(true);
-          } else {
-            await ScopedStoragePackage.releasePersistableUriPermission(
-              persistedUris[0],
-            );
-            setAccessLoading(false);
-            setShowDialogue(true);
-          }
+    //     if (folderAccess === null && persistedUris.length === 0) {
+    //       // user is new
+    //       setAccessLoading(false);
+    //       // console.log('if');
+    //       setShowDialogue(true);
+    //     } else {
+    //       // console.log('else');
+    //       if (folderAccess !== null && persistedUris.length !== 0) {
+    //         // console.log('access');
+    //         setAccessLoading(false);
+    //         setShowDialogue(false);
+    //         ToastAndroid.show(
+    //           'Welcome back to WIStatusSaver 🙋‍♂️🙋‍♂️',
+    //           ToastAndroid.SHORT,
+    //         );
+    //       } else if (folderAccess !== null && persistedUris.length === 0) {
+    //         await AsyncStorage.clear();
+    //         setAccessLoading(false);
+    //         setShowDialogue(true);
+    //       } else {
+    //         await ScopedStoragePackage.releasePersistableUriPermission(
+    //           persistedUris[0],
+    //         );
+    //         setAccessLoading(false);
+    //         setShowDialogue(true);
+    //       }
 
-          // await AsyncStorage.clear();
-        }
-      } catch (error) {
-        console.log(error);
-        setAccessLoading(false);
-        setShowDialogue(true);
-      }
-    };
-    getAccess();
+    //       // await AsyncStorage.clear();
+    //     }
+    //   } catch (error) {
+    //     console.log(error);
+    //     setAccessLoading(false);
+    //     setShowDialogue(true);
+    //   }
+    // };
+    // getAccess();
+
   }, []);
 
   const storeData = async value => {
@@ -112,53 +113,53 @@ const App = () => {
     }
   };
 
-  const requestAccess = async () => {
-    try {
-      setAccessLoading(true);
-      const res = await ScopedStorage.requestAccessToStatusesFolder();
-      // console.log({mainRes: res});
-      if (res !== null && res.includes('.Statuses')) {
-        // user selected correct folder
-        await storeData({hasAccess: true, folderUrl: res});
-        setAccessLoading(false);
-        ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
-        setAccessLoading(false);
-        setShowDialogue(false);
-      } else {
-        // user selected wrong folder
-        ToastAndroid.show(
-          'You might select the wrong folder !',
-          ToastAndroid.LONG,
-        );
-        // get access folder links stored in persistedUris
-        const persistedUris =
-          await ScopedStoragePackage.getPersistedUriPermissions();
-        await ScopedStoragePackage.releasePersistableUriPermission(
-          persistedUris[0],
-        );
-        setAccessLoading(false);
-        setShowDialogue(true);
-      }
-      // return res;
-    } catch (error) {
-      console.log({error});
-      const persistedUris =
-        await ScopedStoragePackage.getPersistedUriPermissions();
-      await ScopedStoragePackage.releasePersistableUriPermission(
-        persistedUris[0],
-      );
-      setAccessLoading(false);
-      setShowDialogue(true);
-      // return null;
-      ToastAndroid.show('Error !' + error, ToastAndroid.LONG);
-    }
-  };
+  // const requestAccess = async () => {
+  //   try {
+  //     setAccessLoading(true);
+  //     const res = await ScopedStorage.requestAccessToStatusesFolder();
+  //     console.log({mainRes: res});
+  //     if (res !== null && res.includes('.Statuses')) {
+  //       // user selected correct folder
+  //       await storeData({hasAccess: true, folderUrl: res});
+  //       setAccessLoading(false);
+  //       ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
+  //       setAccessLoading(false);
+  //       setShowDialogue(false);
+  //     } else {
+  //       // user selected wrong folder
+  //       ToastAndroid.show(
+  //         'You might select the wrong folder !',
+  //         ToastAndroid.LONG,
+  //       );
+  //       // get access folder links stored in persistedUris
+  //       const persistedUris =
+  //         await ScopedStoragePackage.getPersistedUriPermissions();
+  //       await ScopedStoragePackage.releasePersistableUriPermission(
+  //         persistedUris[0],
+  //       );
+  //       setAccessLoading(false);
+  //       setShowDialogue(true);
+  //     }
+  //     // return res;
+  //   } catch (error) {
+  //     console.log({error});
+  //     const persistedUris =
+  //       await ScopedStoragePackage.getPersistedUriPermissions();
+  //     await ScopedStoragePackage.releasePersistableUriPermission(
+  //       persistedUris[0],
+  //     );
+  //     setAccessLoading(false);
+  //     setShowDialogue(true);
+  //     // return null;
+  //     ToastAndroid.show('Error !' + error, ToastAndroid.LONG);
+  //   }
+  // };
 
   return (
     <NavigationContainer>
       <StatusBar backgroundColor={'#074e54'} barStyle={'light-content'} />
       {/* loading component */}
-      {accessLoading && (
+      {/* {accessLoading && (
         <View
           style={{
             flex: 1,
@@ -195,33 +196,7 @@ const App = () => {
             </Text>
           </View>
         </View>
-      )}
-      {/* Access dilogue component */}
-      {showDilogue && !accessLoading && (
-        <View style={{flex: 1, position: 'absolute'}}>
-          <Modal animationType="slide" transparent={true}>
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text
-                  style={{
-                    color: '#000',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    textAlign: 'center',
-                    textTransform: 'capitalize',
-                  }}>
-                  App Needs Storage Permission to download your whatsapp
-                  statuses
-                </Text>
-                <TouchableOpacity onPress={requestAccess} style={styles.prmBtn}>
-                  <Text style={styles.prmBtnText}>Grant Permission</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-        </View>
-      )}
-
+      )} */}
       {/* <Tab.Navigator
         id="rootTab"
         initialRouteName="Home"

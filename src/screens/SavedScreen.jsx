@@ -80,11 +80,15 @@ const SavedScreen = ({navigation}) => {
   const getStatuses = async () => {
     try {
       setLoading(true);
-      const granted = true;
-      // const granted = await requestPermissions();
+      // const granted = true;
+      const granted = await requestPermissions();
       if (!granted) {
         setIsAllPermissionGranted(false);
         setLoading(false);
+        ToastAndroid.show(
+          'App permission missing,grant permission for accessing statuses',
+          ToastAndroid.SHORT,
+        );
       } else {
         setIsAllPermissionGranted(true);
         const files = await RNFS.readDir(WhatsAppStatusDirectory);
@@ -92,12 +96,21 @@ const SavedScreen = ({navigation}) => {
         if (filter === 'Images') {
           const filterFiles = files.filter(file => onlyImages.test(file.name));
           // console.log({filterFiles});
+          if (filterFiles.length === 0) {
+            ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+          }
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else if (filter === 'Videos') {
           const filterFiles = files.filter(file => onlyVideos.test(file.name));
+          if (filterFiles.length === 0) {
+            ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+          }
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
           const filterFiles = files.filter(file => AllMedia.test(file.name));
+          if (filterFiles.length === 0) {
+            ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+          }
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
           console.log({filterFiles});
         }
@@ -112,33 +125,19 @@ const SavedScreen = ({navigation}) => {
   const requestPermissions = async () => {
     try {
       return PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        // PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
       ])
         .then(result => {
           if (
-            result['android.permission.READ_MEDIA_IMAGES'] &&
-            result['android.permission.READ_MEDIA_VIDEO'] &&
-            result['android.permission.READ_MEDIA_AUDIO'] &&
-            result['android.permission.READ_EXTERNAL_STORAGE'] &&
-            // result['android.permission.MANAGE_EXTERNAL_STORAGE'] &&
-            result['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+            result['android.permission.READ_EXTERNAL_STORAGE']  === 'granted'
           ) {
             console.log('permission granted');
             setIsAllPermissionGranted(true);
             //   loadStatuses();
             return true;
           } else if (
-            result['android.permission.READ_MEDIA_IMAGES'] ||
-            result['android.permission.READ_MEDIA_VIDEO'] ||
-            result['android.permission.READ_MEDIA_AUDIO'] ||
-            result['android.permission.READ_EXTERNAL_STORAGE'] ||
-            // result['android.permission.MANAGE_EXTERNAL_STORAGE'] ||
-            result['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+            result['android.permission.READ_EXTERNAL_STORAGE']  ===
               'never_ask_again'
           ) {
             setIsAllPermissionGranted(false);
@@ -248,14 +247,22 @@ const SavedScreen = ({navigation}) => {
           )}
         />
       ) : (
-        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
-            Downloaded status not found,
-          </Text>
-          <Text style={{color: '#00000080', fontSize: 14}}>
-            Download statuses from RECENT screen{' '}
-          </Text>
-        </View>
+        !loading && (
+          <View
+            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
+              Downloaded status not found,
+            </Text>
+            <Text style={{color: '#00000080', fontSize: 14}}>
+              Download statuses from RECENT screen{' '}
+            </Text>
+            <TouchableOpacity
+              onPress={getStatuses}
+              style={[styles.prmBtn, {paddingHorizontal: 10, borderRadius: 5}]}>
+              <Text style={styles.prmBtnText}>Reload</Text>
+            </TouchableOpacity>
+          </View>
+        )
       )}
     </View>
   );

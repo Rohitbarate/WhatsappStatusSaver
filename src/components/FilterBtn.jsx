@@ -46,7 +46,7 @@ const FilterBtn = props => {
           flexDirection: 'row',
         }}
         onPress={handlePress}>
-        <Text style={{color: '#000', fontWeight: '600'}}>{filter}</Text>
+        <Text style={{color: '#000', fontWeight: '500'}}>{filter}</Text>
         <MaterialCommunityIcons
           name={'filter-outline'}
           size={24}

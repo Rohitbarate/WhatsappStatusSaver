@@ -78,6 +78,7 @@ const SelectedStatus = ({route, navigation}) => {
         console.log('saved');
         setIsSaved(true);
       } else {
+        setIsSaved(false);
         console.log('not saved');
       }
     }
@@ -188,7 +189,19 @@ const SelectedStatus = ({route, navigation}) => {
     console.log({fileStat});
     await ScopedStoragePackage.copyFile(fileStat.uri, destUrl, res => {
       console.log({res});
-      ToastAndroid.show(res, ToastAndroid.SHORT);
+      ToastAndroid.show(res.message, ToastAndroid.SHORT);
+      if (!res.success) {
+        RNFS.unlink(WhatsAppStatusDirectory + statusName)
+          .then(() => {
+            // console.log('FILE DELETED');
+            // ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
+            // navigation.goBack();
+          })
+          .catch(err => {
+            console.log(err.message);
+            ToastAndroid.show(err.message, ToastAndroid.SHORT);
+          });
+      }
       checkIsSaved();
     });
   };
@@ -217,7 +230,7 @@ const SelectedStatus = ({route, navigation}) => {
     videoRef.current.seek(-videoProp.seekableDuration);
   };
 
-  const deleteStatusHandler = async (uri, statusName) => {
+  const deleteStatusHandler = async () => {
     Alert.alert(
       '',
       'Delete status?',
@@ -231,9 +244,13 @@ const SelectedStatus = ({route, navigation}) => {
             await RNFS.unlink(WhatsAppStatusDirectory + statusName)
               .then(() => {
                 console.log('FILE DELETED');
-                ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
-
-                navigation.goBack();
+                ToastAndroid.show('Status Deleted', ToastAndroid.SHORT);
+                checkIsSaved();
+                if (
+                  uri.indexOf('content://com.android.externalstorage') === -1
+                ) {
+                  navigation.goBack();
+                }
               })
               .catch(err => {
                 console.log(err.message);
@@ -402,7 +419,7 @@ const SelectedStatus = ({route, navigation}) => {
         <TouchableOpacity
           onPress={() => {
             isSaved
-              ? deleteStatusHandler(uri, statusName)
+              ? deleteStatusHandler()
               : downloadStatusHandler(uri, statusName);
           }}
           style={[

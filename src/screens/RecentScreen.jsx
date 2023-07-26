@@ -114,7 +114,7 @@ const RecentScreen = ({navigation}) => {
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else if (filter === 'Videos') {
           const filterFiles = files.filter(file => onlyVideos.test(file.name));
-          // console.log({filterFiles});
+          console.log({filterFiles});
           setStatuses(preState => ({...preState, allStatuses: filterFiles}));
         } else {
           const filterFiles = files.filter(file => AllMedia.test(file.name));

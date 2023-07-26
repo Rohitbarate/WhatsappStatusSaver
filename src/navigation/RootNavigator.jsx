@@ -4,7 +4,6 @@ import React from 'react';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import SettingsScreen from '../screens/SettingsScreen';
 import InstagramComp from './InstagramComp';
-import WhatsappComp from './WhatsappComp';
 import CustomDrawerContent from './CustomDrawerContent';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import EvilIcons from 'react-native-vector-icons/Octicons';

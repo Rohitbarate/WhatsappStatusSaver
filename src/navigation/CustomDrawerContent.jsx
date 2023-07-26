@@ -6,6 +6,7 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Feather from 'react-native-vector-icons/Feather';
 
 const CustomDrawerContent = props => {
   return (
@@ -24,6 +25,9 @@ const CustomDrawerContent = props => {
         }}
       />
       <DrawerItemList {...props} />
+      <View
+        style={{height:1,width:'100%',backgroundColor:'grey',opacity:0.2}}
+      />
       <DrawerItem
         label={'Check for update'}
         icon={({focused, color, size}) => (
@@ -54,6 +58,9 @@ const CustomDrawerContent = props => {
           />
         )}
       />
+       <View
+        style={{height:1,width:'100%',backgroundColor:'grey',opacity:0.2}}
+      />
       <DrawerItem
         label={'Share App'}
         icon={({focused, color, size}) => (
@@ -65,10 +72,59 @@ const CustomDrawerContent = props => {
             }}
             color={color}
             size={size}
-            name={'share-outline'}
+            name={'share-variant-outline'}
           />
         )}
       />
+       <DrawerItem
+        label={'Invite Friends'}
+        icon={({focused, color, size}) => (
+          <Feather
+            style={{
+              alignSelf: 'center',
+              position: 'absolute',
+              left: 5,
+            }}
+            color={color}
+            size={size}
+            name={'users'}
+          />
+        )}
+      />
+       <View
+        style={{height:1,width:'100%',backgroundColor:'grey',opacity:0.2}}
+      />
+      <DrawerItem
+        label={'Report Bug'}
+        icon={({focused, color, size}) => (
+          <Icon
+            style={{
+              alignSelf: 'center',
+              position: 'absolute',
+              left: 5,
+            }}
+            color={color}
+            size={size}
+            name={'bug'}
+          />
+        )}
+      />
+      <DrawerItem
+        label={'Suggest a feature'}
+        icon={({focused, color, size}) => (
+          <Icon
+            style={{
+              alignSelf: 'center',
+              position: 'absolute',
+              left: 5,
+            }}
+            color={color}
+            size={size}
+            name={'lightbulb-on-outline'}
+          />
+        )}
+      />
+     
     </DrawerContentScrollView>
   );
 };

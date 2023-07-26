@@ -6,6 +6,7 @@ import RecentScreen from './RecentScreen';
 import SavedScreen from './SavedScreen';
 import RecentScreenStack from '../navigation/RecentScreenStack';
 import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
+import SavedScreenStack from '../navigation/SavedScreenStack';
 
 const HomeScreen = () => {
   const TopTabBar = createMaterialTopTabNavigator();
@@ -46,10 +47,11 @@ const HomeScreen = () => {
         
       />
       <TopTabBar.Screen
-        name="Saved"
-        component={SavedScreen}
+        name="SavedStack"
+        component={SavedScreenStack}
         options={
           {
+            title:'saved'
             //   tabBarIcon: ({color}) => (
             //     <MaterialCommunityIcons name="download" size={20} color={color} />
             //   ),

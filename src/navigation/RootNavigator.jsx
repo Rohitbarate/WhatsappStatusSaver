@@ -20,6 +20,7 @@ const RootNavigator = () => {
   return (
     <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
+      initialRouteName='settings'
       screenOptions={{
         drawerPosition: 'left',
         drawerType: 'slide',
@@ -37,6 +38,7 @@ const RootNavigator = () => {
           fontStyle: 'italic',
         },
         headerTintColor: '#fff',
+        
       }}>
       <Drawer.Screen
         name="Whatsapp"

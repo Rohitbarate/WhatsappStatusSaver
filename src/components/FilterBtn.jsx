@@ -58,7 +58,7 @@ const FilterBtn = props => {
         <TouchableOpacity
           style={{
             flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
             alignItems: 'center',
             justifyContent: 'flex-end',
             paddingBottom: 5,

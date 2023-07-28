@@ -32,7 +32,7 @@ const HomeScreen = () => {
         
       })}
       initialRouteName='Recent'
-      backBehavior='history'
+      backBehavior='initialRoute'
       >
       <TopTabBar.Screen
         name="Recent"

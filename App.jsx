@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   Modal,
   StatusBar,
+  Platform,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
@@ -23,15 +24,20 @@ import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {ActivityIndicator} from 'react-native-paper';
 import RootNavigator from './src/navigation/RootNavigator';
 import SplashScreen from 'react-native-splash-screen';
+import {AppContext} from './src/context/appContext';
 
 const Tab = createMaterialBottomTabNavigator();
 
 const {ScopedStorage} = NativeModules;
 
 const App = () => {
-  // const [accessLoading, setAccessLoading] = useState(false);
-  // const [showDilogue, setShowDialogue] = useState(false);
-  // const [folderUrl, setFolderUrl] = useState(null);
+  const {
+    requestExtPermissions,
+    requestScopedPermissionAccess,
+    getAccess,
+    isLatestVersion,
+    setIsLatestVersion,
+  } = useContext(AppContext);
 
   // const getTabBarVisibility = route => {
   //   const routeName = getFocusedRouteNameFromRoute(route);
@@ -41,119 +47,25 @@ const App = () => {
 
   useEffect(() => {
     SplashScreen.hide();
-    // const getAccess = async () => {
-    //   try {
-    //     setAccessLoading(true);
-    //     //  await AsyncStorage.clear()
-    //     // get folder link stored in asyncStorage
-
-    //     const folderAccess = await getData();
-
-    //     // get access folder links stored in persistedUris
-    //     const persistedUris =
-    //       await ScopedStoragePackage.getPersistedUriPermissions();
-    //     console.log({persistedUris});
-
-    //     if (folderAccess === null && persistedUris.length === 0) {
-    //       // user is new
-    //       setAccessLoading(false);
-    //       // console.log('if');
-    //       setShowDialogue(true);
-    //     } else {
-    //       // console.log('else');
-    //       if (folderAccess !== null && persistedUris.length !== 0) {
-    //         // console.log('access');
-    //         setAccessLoading(false);
-    //         setShowDialogue(false);
-    //         ToastAndroid.show(
-    //           'Welcome back to WIStatusSaver 🙋‍♂️🙋‍♂️',
-    //           ToastAndroid.SHORT,
-    //         );
-    //       } else if (folderAccess !== null && persistedUris.length === 0) {
-    //         await AsyncStorage.clear();
-    //         setAccessLoading(false);
-    //         setShowDialogue(true);
-    //       } else {
-    //         await ScopedStoragePackage.releasePersistableUriPermission(
-    //           persistedUris[0],
-    //         );
-    //         setAccessLoading(false);
-    //         setShowDialogue(true);
-    //       }
-
-    //       // await AsyncStorage.clear();
-    //     }
-    //   } catch (error) {
-    //     console.log(error);
-    //     setAccessLoading(false);
-    //     setShowDialogue(true);
-    //   }
-    // };
-    // getAccess();
-
+    const appV = Platform.Version;
+    // const appV = 28
+    // check app version
+    console.log({appV});
+    const handlePermission = async () => {
+      //  app-V less than android 10
+      if (appV < 29) {
+        setIsLatestVersion(false);
+        await requestExtPermissions();
+      } else {
+        setIsLatestVersion(true);
+        await getAccess();
+        // if (!r) {
+        //   await requestScopedPermissionAccess();
+        // }
+      }
+    };
+    handlePermission();
   }, []);
-
-  const storeData = async value => {
-    try {
-      // value :{hasAccess:boolean,folderUrl:String}
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem('folderAccess', jsonValue);
-      return;
-    } catch (e) {
-      console.log('error while storing folder address : ', e);
-    }
-  };
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('folderAccess');
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch (e) {
-      console.log('error while getting folder address : ', e);
-    }
-  };
-
-  // const requestAccess = async () => {
-  //   try {
-  //     setAccessLoading(true);
-  //     const res = await ScopedStorage.requestAccessToStatusesFolder();
-  //     console.log({mainRes: res});
-  //     if (res !== null && res.includes('.Statuses')) {
-  //       // user selected correct folder
-  //       await storeData({hasAccess: true, folderUrl: res});
-  //       setAccessLoading(false);
-  //       ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
-  //       setAccessLoading(false);
-  //       setShowDialogue(false);
-  //     } else {
-  //       // user selected wrong folder
-  //       ToastAndroid.show(
-  //         'You might select the wrong folder !',
-  //         ToastAndroid.LONG,
-  //       );
-  //       // get access folder links stored in persistedUris
-  //       const persistedUris =
-  //         await ScopedStoragePackage.getPersistedUriPermissions();
-  //       await ScopedStoragePackage.releasePersistableUriPermission(
-  //         persistedUris[0],
-  //       );
-  //       setAccessLoading(false);
-  //       setShowDialogue(true);
-  //     }
-  //     // return res;
-  //   } catch (error) {
-  //     console.log({error});
-  //     const persistedUris =
-  //       await ScopedStoragePackage.getPersistedUriPermissions();
-  //     await ScopedStoragePackage.releasePersistableUriPermission(
-  //       persistedUris[0],
-  //     );
-  //     setAccessLoading(false);
-  //     setShowDialogue(true);
-  //     // return null;
-  //     ToastAndroid.show('Error !' + error, ToastAndroid.LONG);
-  //   }
-  // };
 
   return (
     <NavigationContainer>

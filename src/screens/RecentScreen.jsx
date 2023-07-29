@@ -48,6 +48,8 @@ const RecentScreen = ({navigation}) => {
     setStatuses,
     filter,
     setFilter,
+    isLatestVersion,
+    isExtPermissionGranted
   } = useContext(AppContext);
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
@@ -57,10 +59,14 @@ const RecentScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    getAccess();
-    // requestFileAccess();
-    // setLoading(true)
-    getStatuses();
+    if (isLatestVersion) {
+      getAccess();
+      getStatuses();
+    }else{
+      // isExtPermissionGranted && (
+      //   // const statu
+      // )
+    }
 
     const backAction = () => {
       if (navigation.canGoBack()) {
@@ -92,7 +98,7 @@ const RecentScreen = ({navigation}) => {
 
     // Cleanup the event listener when the component is unmounted
     return () => {
-      // onScreenFocus;
+      // onScreenFocus()
       backHandler.remove();
     };
   }, [filter]);

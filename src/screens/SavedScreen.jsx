@@ -12,6 +12,7 @@ import {
   Modal,
   Dimensions,
   BackHandler,
+  ActivityIndicator,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
@@ -20,19 +21,25 @@ import FilterBtn from '../components/FilterBtn';
 import {AppContext} from '../context/appContext';
 
 const SavedScreen = ({navigation}) => {
-  const {savedStatuses, setSavedStatuses, requestExtPermissions,isExtPermissionGranted,setIsExtPermissionGranted} =
-    useContext(AppContext);
+  const {
+    // savedStatuses,
+    // setSavedStatuses,
+    requestExtPermissions,
+    isExtPermissionGranted,
+    setIsExtPermissionGranted,
+  } = useContext(AppContext);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
-  const [statuses, setStatuses] = useState({
-    allStatuses: [],
-    currentMedia: '',
-    mediaName: '',
-  });
+
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const {height, width} = Dimensions.get('window');
   const [fileNames, setFileNames] = useState([]);
+  const [savedStatuses, setSavedStatuses] = useState({
+    allStatuses: [],
+    currentMedia: '',
+    mediaName: '',
+  });
 
   const flatListRef = useRef(null);
 
@@ -61,14 +68,13 @@ const SavedScreen = ({navigation}) => {
       backAction,
     );
 
-    const onScreenFocus = navigation.addListener('focus', () => {
-      getSavedStatuses();
-      console.log('focus');
-    });
-
+    // navigation.addListener('focus', () => {
+    //   getSavedStatuses();
+    //   console.log('focus');
+    // });
     // Cleanup the event listener when the component is unmounted
     return () => {
-      onScreenFocus;
+      // onScreenFocus;
       backHandler.remove();
     };
   }, [filter, navigation]);
@@ -81,46 +87,44 @@ const SavedScreen = ({navigation}) => {
 
   const getSavedStatuses = async () => {
     try {
+      console.log('getSavedStatuses called !');
       setLoading(true);
-      const granted = true;
-      // const granted = await requestExtPermissions();
-      if (!granted) {
-        setIsExtPermissionGranted(false);
-        setLoading(false);
-        ToastAndroid.show(
-          'App permission missing,grant permission for accessing statuses',
-          ToastAndroid.SHORT,
-        );
-      } else {
-        setIsExtPermissionGranted(true);
-        const files = await RNFS.readDir(WhatsAppStatusDirectory);
-        console.log({files});
-        if (filter === 'Images') {
-          const filterFiles = files.filter(file => onlyImages.test(file.name));
-          // console.log({filterFiles});
-          if (filterFiles.length === 0) {
-            ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-          }
-          setStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        } else if (filter === 'Videos') {
-          const filterFiles = files.filter(file => onlyVideos.test(file.name));
-          if (filterFiles.length === 0) {
-            ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-          }
-          setStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        } else {
-          const filterFiles = files.filter(file => AllMedia.test(file.name));
-          if (filterFiles.length === 0) {
-            ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-          }
-          setStatuses(preState => ({...preState, allStatuses: filterFiles}));
-          console.log({filterFiles});
-        }
-        setLoading(false);
+      // const appV = Platform.Version;
+      // if (appV >= 29) {
+      //   setIsExtPermissionGranted(true);
+      const isPathExist = await RNFS.exists(WhatsAppStatusDirectory);
+      // console.log({isPathExist});
+      if (!isPathExist) {
+        await RNFS.mkdir(WhatsAppStatusDirectory);
       }
+      const files = await RNFS.readDir(WhatsAppStatusDirectory);
+      // console.log({files});
+      if (filter === 'Images') {
+        const filterFiles = files.filter(file => onlyImages.test(file.name));
+        console.log({filterFiles});
+        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        if (filterFiles.length === 0) {
+          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+        }
+      } else if (filter === 'Videos') {
+        const filterFiles = files.filter(file => onlyVideos.test(file.name));
+        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        if (filterFiles.length === 0) {
+          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+        }
+      } else {
+        const filterFiles = files.filter(file => AllMedia.test(file.name));
+        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        if (filterFiles.length === 0) {
+          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+        }
+
+        console.log({filterFiles});
+      }
+      setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.log({getAllStatuses_error: error});
+      console.log({getAllStatuses_error_saved: error});
     }
   };
 
@@ -132,7 +136,7 @@ const SavedScreen = ({navigation}) => {
 
   const currentTime = new Date();
 
-  const sortedData = [...statuses.allStatuses].sort((a, b) => {
+  const sortedData = [...savedStatuses.allStatuses].sort((a, b) => {
     const timeA = new Date(a.mtime);
     const timeB = new Date(b.mtime);
     const differenceA = currentTime - timeA;
@@ -148,6 +152,23 @@ const SavedScreen = ({navigation}) => {
         alignItems: 'center',
         // paddingHorizontal:10
       }}>
+      {loading && savedStatuses.allStatuses.length === 0 && (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 100,
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: '#ffffff80',
+          }}>
+          <ActivityIndicator color={'green'} size={30} />
+        </View>
+      )}
       <View
         style={{
           justifyContent: 'space-between',
@@ -181,7 +202,7 @@ const SavedScreen = ({navigation}) => {
                   textAlign: 'center',
                   textTransform: 'capitalize',
                 }}>
-                App Needs Storage Permission to load your whatsapp statuses
+                App Needs Storage Permission to load your whatsapp savedStatuses
               </Text>
               <TouchableOpacity
                 onPress={requestPermissions}
@@ -193,7 +214,7 @@ const SavedScreen = ({navigation}) => {
         </Modal>
       )} */}
 
-      {statuses.allStatuses.length !== 0 ? (
+      {savedStatuses.allStatuses.length !== 0 ? (
         <FlatList
           refreshing={loading}
           bounces={true}
@@ -209,9 +230,9 @@ const SavedScreen = ({navigation}) => {
               item={item}
               isCrntStatusVisible={isCrntStatusVisible}
               setIsCrntStatusVisible={setIsCrntStatusVisible}
-              setStatuses={setStatuses}
+              setStatuses={setSavedStatuses}
               navigation={navigation}
-              statuses={statuses}
+              statuses={savedStatuses}
               getStatuses={getSavedStatuses}
             />
           )}
@@ -224,7 +245,7 @@ const SavedScreen = ({navigation}) => {
               Downloaded status not found,
             </Text>
             <Text style={{color: '#00000080', fontSize: 14}}>
-              Download statuses from RECENT screen{' '}
+              Download savedStatuses from RECENT screen{' '}
             </Text>
             <TouchableOpacity
               onPress={getSavedStatuses}

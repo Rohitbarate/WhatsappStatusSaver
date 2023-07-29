@@ -6,13 +6,16 @@ import {
   TouchableOpacity,
   Modal,
   Image,
+  Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/FontAwesome';
 import Icon3 from 'react-native-vector-icons/Ionicons';
+import {AppContext} from '../context/appContext';
 
 const SettingsScreen = () => {
+  // const {appVersion, setAppVer} = useContext(AppContext);
   const [whatsappType, setWhatsappType] = useState('Whatsapp'); // options 1.Whatsapp 2. WA_business
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [modelfor, setModelfor] = useState(null); // 'appType' & 'appTheme'
@@ -60,10 +63,11 @@ const SettingsScreen = () => {
       </TouchableOpacity>
       {/* app theme */}
       <TouchableOpacity
-        style={styles.optContDiv}
+        style={[styles.optContDiv]}
         onPress={() => {
-          setIsModelVisible(true);
-          setModelfor('appTheme');
+          Alert.alert('', 'Feature will coming soon, Stay tune' );
+          // setIsModelVisible(true);
+          // setModelfor('appTheme');
         }}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Icon3 color={'#000'} size={30} name={'color-palette'} />

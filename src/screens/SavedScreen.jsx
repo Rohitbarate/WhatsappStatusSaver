@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState, useContext} from 'react';
 import {
   View,
   Text,
@@ -17,9 +17,11 @@ import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FilterBtn from '../components/FilterBtn';
+import {AppContext} from '../context/appContext';
 
 const SavedScreen = ({navigation}) => {
-  const [isAllPermissionGranted, setIsAllPermissionGranted] = useState(false);
+  const {savedStatuses, setSavedStatuses, requestExtPermissions,isExtPermissionGranted,setIsExtPermissionGranted} =
+    useContext(AppContext);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [statuses, setStatuses] = useState({
@@ -35,7 +37,7 @@ const SavedScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    getStatuses();
+    getSavedStatuses();
     const backAction = () => {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -60,7 +62,7 @@ const SavedScreen = ({navigation}) => {
     );
 
     const onScreenFocus = navigation.addListener('focus', () => {
-      getStatuses();
+      getSavedStatuses();
       console.log('focus');
     });
 
@@ -77,20 +79,20 @@ const SavedScreen = ({navigation}) => {
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
   const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
 
-  const getStatuses = async () => {
+  const getSavedStatuses = async () => {
     try {
       setLoading(true);
-      // const granted = true;
-      const granted = await requestPermissions();
+      const granted = true;
+      // const granted = await requestExtPermissions();
       if (!granted) {
-        setIsAllPermissionGranted(false);
+        setIsExtPermissionGranted(false);
         setLoading(false);
         ToastAndroid.show(
           'App permission missing,grant permission for accessing statuses',
           ToastAndroid.SHORT,
         );
       } else {
-        setIsAllPermissionGranted(true);
+        setIsExtPermissionGranted(true);
         const files = await RNFS.readDir(WhatsAppStatusDirectory);
         console.log({files});
         if (filter === 'Images') {
@@ -119,38 +121,6 @@ const SavedScreen = ({navigation}) => {
     } catch (error) {
       setLoading(false);
       console.log({getAllStatuses_error: error});
-    }
-  };
-
-  const requestPermissions = async () => {
-    try {
-      return PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ])
-        .then(result => {
-          if (
-            result['android.permission.READ_EXTERNAL_STORAGE']  === 'granted'
-          ) {
-            console.log('permission granted');
-            setIsAllPermissionGranted(true);
-            //   loadStatuses();
-            return true;
-          } else if (
-            result['android.permission.READ_EXTERNAL_STORAGE']  ===
-              'never_ask_again'
-          ) {
-            setIsAllPermissionGranted(false);
-            ToastAndroid.show(
-              'Please Go into Settings -> Applications -> APP_NAME -> Permissions and Allow permissions to continue',
-              ToastAndroid.LONG,
-            );
-            return false;
-          }
-        })
-        .catch(err => console.log(err));
-    } catch (error) {
-      console.log({error});
     }
   };
 
@@ -199,7 +169,7 @@ const SavedScreen = ({navigation}) => {
         />
       </View>
 
-      {/* {!isAllPermissionGranted && (
+      {/* {!isExtPermissionGranted && (
         <Modal animationType="slide" transparent={true}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -227,7 +197,7 @@ const SavedScreen = ({navigation}) => {
         <FlatList
           refreshing={loading}
           bounces={true}
-          onRefresh={() => getStatuses()}
+          onRefresh={() => getSavedStatuses()}
           ref={flatListRef}
           showsVerticalScrollIndicator={true}
           scrollIndicatorInsets={{right: 2}}
@@ -242,7 +212,7 @@ const SavedScreen = ({navigation}) => {
               setStatuses={setStatuses}
               navigation={navigation}
               statuses={statuses}
-              getStatuses={getStatuses}
+              getStatuses={getSavedStatuses}
             />
           )}
         />
@@ -257,7 +227,7 @@ const SavedScreen = ({navigation}) => {
               Download statuses from RECENT screen{' '}
             </Text>
             <TouchableOpacity
-              onPress={getStatuses}
+              onPress={getSavedStatuses}
               style={[styles.prmBtn, {paddingHorizontal: 10, borderRadius: 5}]}>
               <Text style={styles.prmBtnText}>Reload</Text>
             </TouchableOpacity>

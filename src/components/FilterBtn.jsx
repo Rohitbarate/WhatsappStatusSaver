@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, {useContext} from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FilterIcon from 'react-native-vector-icons/Entypo';
 import FilterIcon2 from 'react-native-vector-icons/FontAwesome5';
+import {AppContext} from '../context/appContext';
 
 const FilterBtn = props => {
+  const {getStatuses} = useContext(AppContext);
   const {
     filterModalVisible,
     setFilterModalVisible,
@@ -29,6 +31,7 @@ const FilterBtn = props => {
     setFilter(filterOption);
     setFilterModalVisible(false);
     handleScrollToTop();
+    // getStatuses();
   };
 
   return (
@@ -97,7 +100,11 @@ const FilterBtn = props => {
               <TouchableOpacity
                 style={styles.filterItem}
                 onPress={() => handleFilter('Images')}>
-                <FilterIcon name={'images'} size={20} color={filter==='Images'?'green':'#000'} />
+                <FilterIcon
+                  name={'images'}
+                  size={20}
+                  color={filter === 'Images' ? 'green' : '#000'}
+                />
                 <Text
                   style={[
                     styles.filterItemText,
@@ -113,7 +120,11 @@ const FilterBtn = props => {
               <TouchableOpacity
                 style={styles.filterItem}
                 onPress={() => handleFilter('Videos')}>
-                <FilterIcon name={'folder-video'} size={20} color={filter==='Videos'?'green':'#000'} />
+                <FilterIcon
+                  name={'folder-video'}
+                  size={20}
+                  color={filter === 'Videos' ? 'green' : '#000'}
+                />
                 <Text
                   style={[
                     styles.filterItemText,
@@ -128,7 +139,11 @@ const FilterBtn = props => {
               <TouchableOpacity
                 style={styles.filterItem}
                 onPress={() => handleFilter('All Statuses')}>
-                <FilterIcon2 name={'photo-video'} size={20} color={filter==='All Statuses'?'green':'#000'} />
+                <FilterIcon2
+                  name={'photo-video'}
+                  size={20}
+                  color={filter === 'All Statuses' ? 'green' : '#000'}
+                />
                 <Text
                   style={[
                     styles.filterItemText,
@@ -154,13 +169,13 @@ export default FilterBtn;
 const styles = StyleSheet.create({
   filterItem: {
     paddingTop: 20,
-    flexDirection:'row',
-    alignItems:'center'
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   filterItemText: {
     color: '#000',
     fontSize: 16,
     fontWeight: '500',
-    marginLeft:10
+    marginLeft: 10,
   },
 });

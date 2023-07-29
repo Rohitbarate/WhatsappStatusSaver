@@ -20,7 +20,7 @@ const RootNavigator = () => {
   return (
     <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
-      initialRouteName='settings'
+      initialRouteName='Whatsapp'
       screenOptions={{
         drawerPosition: 'left',
         drawerType: 'slide',

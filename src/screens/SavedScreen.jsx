@@ -22,24 +22,29 @@ import {AppContext} from '../context/appContext';
 
 const SavedScreen = ({navigation}) => {
   const {
-    // savedStatuses,
-    // setSavedStatuses,
+    savedStatuses,
+    setSavedStatuses,
     requestExtPermissions,
     isExtPermissionGranted,
     setIsExtPermissionGranted,
+    getSavedStatuses,
+    savedFilter,
+    setSavedFilter,
+    loading,
+    setLoading
   } = useContext(AppContext);
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  // const [loading, setLoading] = useState(false);
+  // const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const {height, width} = Dimensions.get('window');
   const [fileNames, setFileNames] = useState([]);
-  const [savedStatuses, setSavedStatuses] = useState({
-    allStatuses: [],
-    currentMedia: '',
-    mediaName: '',
-  });
+  // const [savedStatuses, setSavedStatuses] = useState({
+  //   allStatuses: [],
+  //   currentMedia: '',
+  //   mediaName: '',
+  // });
 
   const flatListRef = useRef(null);
 
@@ -77,7 +82,7 @@ const SavedScreen = ({navigation}) => {
       // onScreenFocus;
       backHandler.remove();
     };
-  }, [filter, navigation]);
+  }, [savedFilter, navigation]);
 
   const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
 
@@ -85,48 +90,48 @@ const SavedScreen = ({navigation}) => {
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
   const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
 
-  const getSavedStatuses = async () => {
-    try {
-      console.log('getSavedStatuses called !');
-      setLoading(true);
-      // const appV = Platform.Version;
-      // if (appV >= 29) {
-      //   setIsExtPermissionGranted(true);
-      const isPathExist = await RNFS.exists(WhatsAppStatusDirectory);
-      // console.log({isPathExist});
-      if (!isPathExist) {
-        await RNFS.mkdir(WhatsAppStatusDirectory);
-      }
-      const files = await RNFS.readDir(WhatsAppStatusDirectory);
-      // console.log({files});
-      if (filter === 'Images') {
-        const filterFiles = files.filter(file => onlyImages.test(file.name));
-        console.log({filterFiles});
-        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        if (filterFiles.length === 0) {
-          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-        }
-      } else if (filter === 'Videos') {
-        const filterFiles = files.filter(file => onlyVideos.test(file.name));
-        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        if (filterFiles.length === 0) {
-          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-        }
-      } else {
-        const filterFiles = files.filter(file => AllMedia.test(file.name));
-        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
-        if (filterFiles.length === 0) {
-          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-        }
+  // const getSavedStatuses = async () => {
+  //   try {
+  //     console.log('getSavedStatuses called !');
+  //     setLoading(true);
+  //     // const appV = Platform.Version;
+  //     // if (appV >= 29) {
+  //     //   setIsExtPermissionGranted(true);
+  //     const isPathExist = await RNFS.exists(WhatsAppStatusDirectory);
+  //     // console.log({isPathExist});
+  //     if (!isPathExist) {
+  //       await RNFS.mkdir(WhatsAppStatusDirectory);
+  //     }
+  //     const files = await RNFS.readDir(WhatsAppStatusDirectory);
+  //     // console.log({files});
+  //     if (savedFilter === 'Images') {
+  //       const filterFiles = files.savedFilter(file => onlyImages.test(file.name));
+  //       console.log({filterFiles});
+  //       setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+  //       if (filterFiles.length === 0) {
+  //         ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+  //       }
+  //     } else if (savedFilter === 'Videos') {
+  //       const filterFiles = files.savedFilter(file => onlyVideos.test(file.name));
+  //       setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+  //       if (filterFiles.length === 0) {
+  //         ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+  //       }
+  //     } else {
+  //       const filterFiles = files.savedFilter(file => AllMedia.test(file.name));
+  //       setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+  //       if (filterFiles.length === 0) {
+  //         ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+  //       }
 
-        console.log({filterFiles});
-      }
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.log({getAllStatuses_error_saved: error});
-    }
-  };
+  //       console.log({filterFiles});
+  //     }
+  //     setLoading(false);
+  //   } catch (error) {
+  //     setLoading(false);
+  //     console.log({getAllStatuses_error_saved: error});
+  //   }
+  // };
 
   const handleScrollToTop = () => {
     if (flatListRef.current) {
@@ -180,13 +185,14 @@ const SavedScreen = ({navigation}) => {
         <Text style={{color: '#000000', fontWeight: '400', fontSize: 13}}>
           {sortedData.length} items in total
         </Text>
-        {/* filter btn */}
+        {/* savedFilter btn */}
         <FilterBtn
           filterModalVisible={filterModalVisible}
           setFilterModalVisible={setFilterModalVisible}
-          filter={filter}
-          setFilter={setFilter}
+          filter={savedFilter}
+          setFilter={setSavedFilter}
           handleScrollToTop={handleScrollToTop}
+          isSaved={true}
         />
       </View>
 

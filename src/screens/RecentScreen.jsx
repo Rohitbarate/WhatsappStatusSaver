@@ -210,6 +210,7 @@ const RecentScreen = ({navigation}) => {
           filter={filter}
           setFilter={setFilter}
           handleScrollToTop={handleScrollToTop}
+          isSaved={false}
         />
       </View>
 

@@ -28,10 +28,11 @@ const SelectedStatus = ({route, navigation}) => {
   const [isVideoEnded, setIsVideoEnded] = useState(false);
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+ 
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
-  const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
+  const WhatsAppSavedStatusDirectory = `${RNFS.PicturesDirectoryPath}/`;
 
   // LogBox.ignoreLogs([
   //   'Non-serializable values were found in the navigation state',
@@ -39,7 +40,7 @@ const SelectedStatus = ({route, navigation}) => {
 
   useEffect(() => {
     checkIsSaved();
-
+    console.log({WhatsAppSavedStatusDirectory});
     function backAction() {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -70,7 +71,7 @@ const SelectedStatus = ({route, navigation}) => {
   const videoRef = useRef(null);
 
   const checkIsSaved = async () => {
-    const savedFiles = await RNFS.readdir(WhatsAppStatusDirectory);
+    const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
     console.log({savedFiles});
     if (savedFiles) {
       const res = savedFiles.indexOf(statusName);
@@ -191,7 +192,7 @@ const SelectedStatus = ({route, navigation}) => {
       console.log({res});
       ToastAndroid.show(res.message, ToastAndroid.SHORT);
       if (!res.success) {
-        RNFS.unlink(WhatsAppStatusDirectory + statusName)
+        RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
           .then(() => {
             // console.log('FILE DELETED');
             // ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
@@ -241,7 +242,7 @@ const SelectedStatus = ({route, navigation}) => {
         {
           text: 'delete',
           onPress: async () => {
-            await RNFS.unlink(WhatsAppStatusDirectory + statusName)
+            await RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
               .then(() => {
                 console.log('FILE DELETED');
                 ToastAndroid.show('Status Deleted', ToastAndroid.SHORT);

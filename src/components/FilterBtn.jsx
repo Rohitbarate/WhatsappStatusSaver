@@ -13,13 +13,15 @@ import FilterIcon2 from 'react-native-vector-icons/FontAwesome5';
 import {AppContext} from '../context/appContext';
 
 const FilterBtn = props => {
-  const {getStatuses} = useContext(AppContext);
+  const {getStatuses, savedFilter, setSavedFilter, filter, setFilter} =
+    useContext(AppContext);
   const {
     filterModalVisible,
     setFilterModalVisible,
-    filter,
-    setFilter,
+    // filter,
+    // setFilter,
     handleScrollToTop,
+    isSaved,
   } = props;
   const {height, width} = Dimensions.get('window');
 
@@ -28,7 +30,7 @@ const FilterBtn = props => {
   };
 
   const handleFilter = filterOption => {
-    setFilter(filterOption);
+    isSaved ? setSavedFilter(filterOption) : setFilter(filterOption);
     setFilterModalVisible(false);
     handleScrollToTop();
     // getStatuses();
@@ -49,7 +51,9 @@ const FilterBtn = props => {
           flexDirection: 'row',
         }}
         onPress={handlePress}>
-        <Text style={{color: '#000', fontWeight: '500'}}>{filter}</Text>
+        <Text style={{color: '#000', fontWeight: '500'}}>
+          {isSaved ? savedFilter : filter}
+        </Text>
         <MaterialCommunityIcons
           name={'filter-outline'}
           size={24}
@@ -103,12 +107,24 @@ const FilterBtn = props => {
                 <FilterIcon
                   name={'images'}
                   size={20}
-                  color={filter === 'Images' ? 'green' : '#000'}
+                  color={isSaved
+                      ? savedFilter === 'Images'
+                        ? 'green'
+                        : '#000'
+                      : filter === 'Images'
+                      ? 'green'
+                      : '#000'}
                 />
                 <Text
                   style={[
                     styles.filterItemText,
-                    {color: filter === 'Images' ? 'green' : '#000'},
+                    {color: isSaved
+                      ? savedFilter === 'Images'
+                        ? 'green'
+                        : '#000'
+                      : filter === 'Images'
+                      ? 'green'
+                      : '#000'},
                   ]}>
                   Images
                 </Text>
@@ -123,12 +139,24 @@ const FilterBtn = props => {
                 <FilterIcon
                   name={'folder-video'}
                   size={20}
-                  color={filter === 'Videos' ? 'green' : '#000'}
+                  color={isSaved
+                      ? savedFilter === 'Videos'
+                        ? 'green'
+                        : '#000'
+                      : filter === 'Videos'
+                      ? 'green'
+                      : '#000'}
                 />
                 <Text
                   style={[
                     styles.filterItemText,
-                    {color: filter === 'Videos' ? 'green' : '#000'},
+                    {color: isSaved
+                      ? savedFilter === 'Videos'
+                        ? 'green'
+                        : '#000'
+                      : filter === 'Videos'
+                      ? 'green'
+                      : '#000'},
                   ]}>
                   Videos
                 </Text>
@@ -142,12 +170,28 @@ const FilterBtn = props => {
                 <FilterIcon2
                   name={'photo-video'}
                   size={20}
-                  color={filter === 'All Statuses' ? 'green' : '#000'}
+                  color={
+                    isSaved
+                      ? savedFilter === 'All Statuses'
+                        ? 'green'
+                        : '#000'
+                      : filter === 'All Statuses'
+                      ? 'green'
+                      : '#000'
+                  }
                 />
                 <Text
                   style={[
                     styles.filterItemText,
-                    {color: filter === 'All Statuses' ? 'green' : '#000'},
+                    {
+                      color: isSaved
+                        ? savedFilter === 'All Statuses'
+                          ? 'green'
+                          : '#000'
+                        : filter === 'All Statuses'
+                        ? 'green'
+                        : '#000',
+                    },
                   ]}>
                   All Media
                 </Text>

@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {createContext, useState} from 'react';
-import {NativeModules, ToastAndroid, PermissionsAndroid, Platform} from 'react-native';
+import {
+  NativeModules,
+  ToastAndroid,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 const {ScopedStorage} = NativeModules;
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {check, PERMISSIONS, RESULTS} from 'react-native-permissions';
@@ -15,6 +20,7 @@ export const AppProvider = ({children}) => {
   const [isAccessGranted, setIsAccessGranted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [appVersion, setAppVersion] = useState(null);
   const [accessLoading, setAccessLoading] = useState(false);
   const [showDilogue, setShowDialogue] = useState(false);
@@ -24,7 +30,18 @@ export const AppProvider = ({children}) => {
     currentMedia: '',
     mediaName: '',
   });
+  const [savedStatuses, setSavedStatuses] = useState({
+    allStatuses: [],
+    currentMedia: '',
+    mediaName: '',
+  });
 
+  // const WhatsAppSavedStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
+  const WhatsAppSavedStatusDirectory = `${RNFS.DownloadDirectoryPath}/`;
+
+  const onlyVideos = /\.(mp4)$/i;
+  const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
+  const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
   // request scoped storage permission
   const requestScopedPermissionAccess = async () => {
     try {
@@ -72,10 +89,6 @@ export const AppProvider = ({children}) => {
 
   // get statuses (recent)
   const getStatuses = async () => {
-    const onlyVideos = /\.(mp4)$/i;
-    const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
-    const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
-
     const appV = Platform.Version;
     let files;
     setLoading(true);
@@ -248,6 +261,50 @@ export const AppProvider = ({children}) => {
     }
   };
 
+  const getSavedStatuses = async () => {
+    try {
+      console.log('getSavedStatuses called !');
+      setLoading(true);
+      // const appV = Platform.Version;
+      // if (appV >= 29) {
+      //   setIsExtPermissionGranted(true);
+      const isPathExist = await RNFS.exists(WhatsAppSavedStatusDirectory);
+      // console.log({isPathExist});
+      if (!isPathExist) {
+        await RNFS.mkdir(WhatsAppSavedStatusDirectory);
+      }
+      const files = await RNFS.readDir(WhatsAppSavedStatusDirectory);
+      // console.log({files});
+      if (savedFilter === 'Images') {
+        const filterFiles = files.filter(file => onlyImages.test(file.name));
+        console.log({images: filterFiles});
+        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        if (filterFiles.length === 0) {
+          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+        }
+      } else if (savedFilter === 'Videos') {
+        const filterFiles = files.filter(file => onlyVideos.test(file.name));
+        console.log({videos: filterFiles});
+        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        if (filterFiles.length === 0) {
+          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+        }
+      } else {
+        const filterFiles = files.filter(file => AllMedia.test(file.name));
+        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        if (filterFiles.length === 0) {
+          ToastAndroid.show('Status not found', ToastAndroid.SHORT);
+        }
+
+        console.log({All: filterFiles});
+      }
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log({getAllStatuses_error_saved: error});
+    }
+  };
+
   const shouldShowRationale = async () => {
     try {
       const readStorageStatus = await PermissionsAndroid.request(
@@ -290,13 +347,16 @@ export const AppProvider = ({children}) => {
     setShowDialogue,
     statuses,
     setStatuses,
-    // savedStatuses,
-    // setSavedStatuses,
+    savedStatuses,
+    setSavedStatuses,
     filter,
     setFilter,
     requestExtPermissions,
     isLatestVersion,
     setIsLatestVersion,
+    getSavedStatuses,
+    savedFilter,
+    setSavedFilter,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

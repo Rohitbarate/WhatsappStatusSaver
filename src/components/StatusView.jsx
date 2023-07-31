@@ -32,6 +32,7 @@ const StatusView = ({
     fileName: item.name || item.filename,
     filePath: item.path ? `file://${item.path}` : item.uri,
   };
+  console.log({filename:status.fileName});
 
   const deleteStatus = async () => {
     if (!item.path) {
@@ -102,7 +103,7 @@ const StatusView = ({
           }}
           source={{uri: status.filePath}}
         />
-        {status.fileName.indexOf('.jpg' || '.jpeg' || '.png') === -1 && (
+        {status.fileName.indexOf('.mp4') >=0 && (
           <View
             style={{
               position: 'absolute',

@@ -268,7 +268,7 @@ const SelectedStatus = ({route, navigation}) => {
 
   return (
     <View style={styles.container}>
-      {statusName.indexOf('.jpg' || '.jpeg' || '.png') !== -1 ? (
+      {statusName.indexOf('.mp4') == -1 ? (
         <View
           style={{
             width: Dimensions.get('window').width - 20,

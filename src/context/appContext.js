@@ -37,7 +37,8 @@ export const AppProvider = ({children}) => {
   });
 
   // const WhatsAppSavedStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
-  const WhatsAppSavedStatusDirectory = `${RNFS.DownloadDirectoryPath}/`;
+  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/status_saver/`;
+  console.log({WhatsAppSavedStatusDirectory});
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
@@ -274,7 +275,7 @@ export const AppProvider = ({children}) => {
         await RNFS.mkdir(WhatsAppSavedStatusDirectory);
       }
       const files = await RNFS.readDir(WhatsAppSavedStatusDirectory);
-      // console.log({files});
+      console.log({files});
       if (savedFilter === 'Images') {
         const filterFiles = files.filter(file => onlyImages.test(file.name));
         console.log({images: filterFiles});

@@ -32,7 +32,7 @@ const StatusView = ({
     fileName: item.name || item.filename,
     filePath: item.path ? `file://${item.path}` : item.uri,
   };
-  console.log({filename:status.fileName});
+  // console.log({filename:status.fileName});
 
   const deleteStatus = async () => {
     if (!item.path) {

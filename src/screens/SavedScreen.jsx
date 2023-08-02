@@ -31,7 +31,7 @@ const SavedScreen = ({navigation}) => {
     savedFilter,
     setSavedFilter,
     loading,
-    setLoading
+    setLoading,
   } = useContext(AppContext);
   // const [loading, setLoading] = useState(false);
   // const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
@@ -77,12 +77,13 @@ const SavedScreen = ({navigation}) => {
     //   getSavedStatuses();
     //   console.log('focus');
     // });
+
     // Cleanup the event listener when the component is unmounted
     return () => {
       // onScreenFocus;
       backHandler.remove();
     };
-  }, [savedFilter, navigation]);
+  }, [savedFilter]);
 
   const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
 
@@ -155,7 +156,7 @@ const SavedScreen = ({navigation}) => {
         flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        // paddingHorizontal:10
+        paddingHorizontal: 10,
       }}>
       {loading && savedStatuses.allStatuses.length === 0 && (
         <View
@@ -179,8 +180,8 @@ const SavedScreen = ({navigation}) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexDirection: 'row',
-          padding: 10,
-          width: width,
+          paddingVertical: 10,
+          width: '100%',
         }}>
         <Text style={{color: '#000000', fontWeight: '400', fontSize: 13}}>
           {sortedData.length} items in total
@@ -222,6 +223,8 @@ const SavedScreen = ({navigation}) => {
 
       {savedStatuses.allStatuses.length !== 0 ? (
         <FlatList
+          stickyHeaderHiddenOnScroll={true}
+          columnWrapperStyle={{flex:1,justifyContent: 'flex-start'}}
           refreshing={loading}
           bounces={true}
           onRefresh={() => getSavedStatuses()}

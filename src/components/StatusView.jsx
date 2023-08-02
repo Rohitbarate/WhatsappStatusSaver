@@ -142,6 +142,8 @@ export default StatusView;
 
 const styles = StyleSheet.create({
   outerView: {
+    // flex:0.5,
+    alignSelf:'flex-start',
     borderColor: 'grey',
     borderWidth: 0.5,
     borderRadius: 10,
@@ -149,6 +151,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    margin: 10,
+    margin: 6,
   },
 });

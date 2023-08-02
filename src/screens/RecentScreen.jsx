@@ -236,6 +236,7 @@ const RecentScreen = ({navigation}) => {
         <FlatList
           refreshing={loading}
           bounces={true}
+          columnWrapperStyle={{flex:1,justifyContent: 'flex-start'}}
           onRefresh={() => getStatuses()}
           ref={flatListRef}
           showsVerticalScrollIndicator={true}

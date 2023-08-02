@@ -13,7 +13,7 @@ import {
   NativeModules,
   Platform,
 } from 'react-native';
-import React, {useEffect, useRef, useState,useContext} from 'react';
+import React, {useEffect, useRef, useState, useContext} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ControlIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Share from 'react-native-share';
@@ -22,7 +22,7 @@ import RNFS from 'react-native-fs';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Pinchable from 'react-native-pinchable';
-import { AppContext } from '../context/appContext';
+import {AppContext} from '../context/appContext';
 
 const SelectedStatus = ({route, navigation}) => {
   const {uri, statusName, mime} = route.params;
@@ -45,7 +45,6 @@ const SelectedStatus = ({route, navigation}) => {
   // ]);
 
   useEffect(() => {
-
     statusName.indexOf('.mp4') == -1
       ? setStatusType('IMG')
       : setStatusType('VID');
@@ -240,8 +239,8 @@ const SelectedStatus = ({route, navigation}) => {
     console.log({fileStat});
     await ScopedStoragePackage.copyFile(fileStat.uri, destUrl, res => {
       console.log({res});
-      ToastAndroid.show(res.message, ToastAndroid.SHORT);
       if (!res.success) {
+        ToastAndroid.show(res.message, ToastAndroid.SHORT);
         RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
           .then(() => {
             // console.log('FILE DELETED');
@@ -252,7 +251,12 @@ const SelectedStatus = ({route, navigation}) => {
             console.log(err.message);
             ToastAndroid.show(err.message, ToastAndroid.SHORT);
           });
+        return;
       }
+      ToastAndroid.show(
+        res.message + 'at DCIM/wi_status_saver/',
+        ToastAndroid.LONG,
+      );
       NativeModules.MediaScannerModule.scanFile(destUrl);
       checkIsSaved();
     });
@@ -302,7 +306,7 @@ const SelectedStatus = ({route, navigation}) => {
               console.log({unlink: WhatsAppSavedStatusDirectory + statusName});
               return;
             }
-         
+
             await RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
               .then(() => {
                 console.log('FILE DELETED');
@@ -312,7 +316,7 @@ const SelectedStatus = ({route, navigation}) => {
                   uri.indexOf('content://com.android.externalstorage') === -1
                 ) {
                   navigation.goBack();
-                  getSavedStatuses()
+                  getSavedStatuses();
                 }
               })
               .catch(err => {

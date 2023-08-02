@@ -32,7 +32,6 @@ import android.util.Log;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import org.apache.commons.io.FileUtils;
 
 public class ScopedStorage extends ReactContextBaseJavaModule {
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;

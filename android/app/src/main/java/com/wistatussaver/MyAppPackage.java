@@ -19,9 +19,9 @@ public class MyAppPackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(
             ReactApplicationContext reactContext) {
-        List<NativeModule> modules = new ArrayList<>()
-                ;
+        List<NativeModule> modules = new ArrayList<>();
         modules.add(new ScopedStorage(reactContext));
+        modules.add(new MediaScannerModule(reactContext));
         return modules;
     }
 

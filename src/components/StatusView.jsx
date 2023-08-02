@@ -9,10 +9,11 @@ import {
   ToastAndroid,
   Alert,
 } from 'react-native';
-import React from 'react';
+import React, { useContext } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ScopedStorage from 'react-native-scoped-storage';
 import RNFS from 'react-native-fs';
+import { AppContext } from '../context/appContext';
 
 const StatusView = ({
   item,
@@ -23,8 +24,13 @@ const StatusView = ({
   getStatuses,
 }) => {
   const {height, width} = Dimensions.get('window');
+  const {
+    getSavedStatuses,
+  } = useContext(AppContext);
 
   const WhatsAppStatusDirectory = `/storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
+
+  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
 
   // console.log({item});
 
@@ -51,11 +57,13 @@ const StatusView = ({
           {
             text: 'delete',
             onPress: async () => {
-              await RNFS.unlink(
-                RNFS.DocumentDirectoryPath + '/Media/Statuses/' + item.name,
-              )
+              const isExist = await RNFS.exists(WhatsAppSavedStatusDirectory + status.fileName);
+              if (!isExist) {
+                ToastAndroid.show('Status not available', ToastAndroid.SHORT);
+              }
+              await RNFS.unlink(WhatsAppSavedStatusDirectory + item.name)
                 .then(() => {
-                  getStatuses();
+                  getSavedStatuses();
                   console.log('FILE DELETED');
                   ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
                 })
@@ -75,7 +83,7 @@ const StatusView = ({
 
   return (
     <TouchableOpacity
-    activeOpacity={0.6}
+      activeOpacity={0.6}
       onPress={() => {
         setStatuses(prevState => ({
           ...prevState,
@@ -103,16 +111,25 @@ const StatusView = ({
           }}
           source={{uri: status.filePath}}
         />
-        {status.fileName.indexOf('.mp4') >=0 && (
+        {status.fileName.indexOf('.mp4') >= 0 && (
           <View
             style={{
               position: 'absolute',
               alignSelf: 'center',
               backgroundColor: '#212121',
               borderRadius: 55,
-              opacity:0.8
+              opacity: 0.8,
             }}>
-            <Icon style={{backfaceVisibility:'visible',opacity:1,paddingLeft:6}} name="play-sharp" color="#fff" size={45} />
+            <Icon
+              style={{
+                backfaceVisibility: 'visible',
+                opacity: 1,
+                paddingLeft: 6,
+              }}
+              name="play-sharp"
+              color="#fff"
+              size={45}
+            />
           </View>
         )}
       </View>

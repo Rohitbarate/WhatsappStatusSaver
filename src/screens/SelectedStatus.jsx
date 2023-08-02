@@ -10,6 +10,8 @@ import {
   StatusBar,
   LogBox,
   Alert,
+  NativeModules,
+  Platform,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -28,18 +30,31 @@ const SelectedStatus = ({route, navigation}) => {
   const [isVideoEnded, setIsVideoEnded] = useState(false);
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
- 
+  const [statusType, setStatusType] = useState(null);
+  const [newStatusName, setNewStatusName] = useState(statusName);
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
-  const WhatsAppSavedStatusDirectory = `${RNFS.PicturesDirectoryPath}/`;
+
+  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
 
   // LogBox.ignoreLogs([
   //   'Non-serializable values were found in the navigation state',
   // ]);
 
   useEffect(() => {
+    statusName.indexOf('.mp4') == -1
+      ? setStatusType('IMG')
+      : setStatusType('VID');
+
+    setNewStatusName(
+      statusName.indexOf('.mp4') == -1
+        ? 'IMG' + '_' + getCurrentTimeInFormat() + '_' + statusName
+        : 'VID' + '_' + getCurrentTimeInFormat() + '_' + statusName,
+    );
+    console.log({getCurrentTimeInFormat: getCurrentTimeInFormat()});
     checkIsSaved();
+
     console.log({WhatsAppSavedStatusDirectory});
     function backAction() {
       if (navigation.canGoBack()) {
@@ -70,12 +85,36 @@ const SelectedStatus = ({route, navigation}) => {
 
   const videoRef = useRef(null);
 
+  const getCurrentTimeInFormat = () => {
+    const date = new Date();
+
+    // Helper function to pad numbers with leading zeros
+    function pad(number) {
+      if (number < 10) {
+        return '0' + number;
+      }
+      return number;
+    }
+
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1); // Months are zero-based, so we add 1
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+
+    // Combine the components into the desired format
+    const formattedTime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+    return formattedTime;
+  };
+
   const checkIsSaved = async () => {
     const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
     console.log({savedFiles});
+    console.log({statusName});
     if (savedFiles) {
-      const res = savedFiles.indexOf(statusName);
-      if (res !== -1) {
+      const res = savedFiles.some((s)=>s.includes(statusName));
+      if (res) {
         console.log('saved');
         setIsSaved(true);
       } else {
@@ -146,16 +185,23 @@ const SelectedStatus = ({route, navigation}) => {
     const sourceUrl =
       'content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses%2F' +
       statusName;
-    const destUrl = 'data/user/0/com.wistatussaver/files/Media/Statuses';
+    const destUrl = WhatsAppSavedStatusDirectory;
+
+    // if (statusType === 'IMG') {
+    //   statusName = statusType + getCurrentTimeInFormat() + '.jpg';
+    // } else {
+    //   statusName = statusType + getCurrentTimeInFormat() + '.mp4';
+    // }
 
     console.log({
       sourceUrl,
       destUrl,
       mime,
+      newStatusName,
     });
 
     try {
-      const isExist = await RNFS.exists(destUrl + '/' + statusName);
+      const isExist = await RNFS.exists(destUrl + '/' + newStatusName);
       if (isExist) {
         ToastAndroid.show('Status is Already Downloaded', ToastAndroid.SHORT);
       } else {
@@ -171,7 +217,7 @@ const SelectedStatus = ({route, navigation}) => {
     try {
       const des = await ScopedStoragePackage.createFile(
         destUrl,
-        statusName,
+        newStatusName,
         mime,
       );
       console.log({des});
@@ -268,7 +314,7 @@ const SelectedStatus = ({route, navigation}) => {
 
   return (
     <View style={styles.container}>
-      {statusName.indexOf('.mp4') == -1 ? (
+      {statusType === 'IMG' ? (
         <View
           style={{
             width: Dimensions.get('window').width - 20,

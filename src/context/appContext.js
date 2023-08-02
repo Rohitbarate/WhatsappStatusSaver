@@ -37,7 +37,7 @@ export const AppProvider = ({children}) => {
   });
 
   // const WhatsAppSavedStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
-  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/status_saver/`;
+  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
   console.log({WhatsAppSavedStatusDirectory});
 
   const onlyVideos = /\.(mp4)$/i;

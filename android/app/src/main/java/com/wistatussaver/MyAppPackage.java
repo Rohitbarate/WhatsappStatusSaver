@@ -22,6 +22,8 @@ public class MyAppPackage implements ReactPackage {
         List<NativeModule> modules = new ArrayList<>();
         modules.add(new ScopedStorage(reactContext));
         modules.add(new MediaScannerModule(reactContext));
+        modules.add(new ContentUriToAbsolutePathModule(reactContext));
+
         return modules;
     }
 

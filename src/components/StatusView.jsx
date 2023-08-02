@@ -9,11 +9,11 @@ import {
   ToastAndroid,
   Alert,
 } from 'react-native';
-import React, { useContext } from 'react';
+import React, {useContext} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ScopedStorage from 'react-native-scoped-storage';
 import RNFS from 'react-native-fs';
-import { AppContext } from '../context/appContext';
+import {AppContext} from '../context/appContext';
 
 const StatusView = ({
   item,
@@ -24,9 +24,7 @@ const StatusView = ({
   getStatuses,
 }) => {
   const {height, width} = Dimensions.get('window');
-  const {
-    getSavedStatuses,
-  } = useContext(AppContext);
+  const {getSavedStatuses} = useContext(AppContext);
 
   const WhatsAppStatusDirectory = `/storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
 
@@ -57,9 +55,12 @@ const StatusView = ({
           {
             text: 'delete',
             onPress: async () => {
-              const isExist = await RNFS.exists(WhatsAppSavedStatusDirectory + status.fileName);
+              const isExist = await RNFS.exists(
+                WhatsAppSavedStatusDirectory + status.fileName,
+              );
               if (!isExist) {
                 ToastAndroid.show('Status not available', ToastAndroid.SHORT);
+                return
               }
               await RNFS.unlink(WhatsAppSavedStatusDirectory + item.name)
                 .then(() => {

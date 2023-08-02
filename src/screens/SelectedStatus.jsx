@@ -13,7 +13,7 @@ import {
   NativeModules,
   Platform,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState,useContext} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ControlIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Share from 'react-native-share';
@@ -22,6 +22,7 @@ import RNFS from 'react-native-fs';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Pinchable from 'react-native-pinchable';
+import { AppContext } from '../context/appContext';
 
 const SelectedStatus = ({route, navigation}) => {
   const {uri, statusName, mime} = route.params;
@@ -31,7 +32,8 @@ const SelectedStatus = ({route, navigation}) => {
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [statusType, setStatusType] = useState(null);
-  const [newStatusName, setNewStatusName] = useState(statusName);
+  // const [newStatusName, setNewStatusName] = useState(statusName);
+  const {getSavedStatuses} = useContext(AppContext);
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
@@ -43,15 +45,17 @@ const SelectedStatus = ({route, navigation}) => {
   // ]);
 
   useEffect(() => {
+
     statusName.indexOf('.mp4') == -1
       ? setStatusType('IMG')
       : setStatusType('VID');
 
-    setNewStatusName(
-      statusName.indexOf('.mp4') == -1
-        ? 'IMG' + '_' + getCurrentTimeInFormat() + '_' + statusName
-        : 'VID' + '_' + getCurrentTimeInFormat() + '_' + statusName,
-    );
+    // setNewStatusName(
+    //   statusName.indexOf('.mp4') == -1
+    //     ? 'IMG' + '_' + getCurrentTimeInFormat() + '_' + statusName
+    //     : 'VID' + '_' + getCurrentTimeInFormat() + '_' + statusName,
+    // );
+
     console.log({getCurrentTimeInFormat: getCurrentTimeInFormat()});
     checkIsSaved();
 
@@ -113,7 +117,7 @@ const SelectedStatus = ({route, navigation}) => {
     console.log({savedFiles});
     console.log({statusName});
     if (savedFiles) {
-      const res = savedFiles.some((s)=>s.includes(statusName));
+      const res = savedFiles.some(s => s.includes(statusName));
       if (res) {
         console.log('saved');
         setIsSaved(true);
@@ -197,11 +201,11 @@ const SelectedStatus = ({route, navigation}) => {
       sourceUrl,
       destUrl,
       mime,
-      newStatusName,
+      statusName,
     });
 
     try {
-      const isExist = await RNFS.exists(destUrl + '/' + newStatusName);
+      const isExist = await RNFS.exists(destUrl + '/' + statusName);
       if (isExist) {
         ToastAndroid.show('Status is Already Downloaded', ToastAndroid.SHORT);
       } else {
@@ -217,7 +221,7 @@ const SelectedStatus = ({route, navigation}) => {
     try {
       const des = await ScopedStoragePackage.createFile(
         destUrl,
-        newStatusName,
+        statusName,
         mime,
       );
       console.log({des});
@@ -249,6 +253,7 @@ const SelectedStatus = ({route, navigation}) => {
             ToastAndroid.show(err.message, ToastAndroid.SHORT);
           });
       }
+      NativeModules.MediaScannerModule.scanFile(destUrl);
       checkIsSaved();
     });
   };
@@ -288,6 +293,16 @@ const SelectedStatus = ({route, navigation}) => {
         {
           text: 'delete',
           onPress: async () => {
+            const isExist = await RNFS.exists(
+              WhatsAppSavedStatusDirectory + statusName,
+            );
+            if (!isExist) {
+              ToastAndroid.show('Status not available', ToastAndroid.SHORT);
+              navigation.goBack();
+              console.log({unlink: WhatsAppSavedStatusDirectory + statusName});
+              return;
+            }
+         
             await RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
               .then(() => {
                 console.log('FILE DELETED');
@@ -297,6 +312,7 @@ const SelectedStatus = ({route, navigation}) => {
                   uri.indexOf('content://com.android.externalstorage') === -1
                 ) {
                   navigation.goBack();
+                  getSavedStatuses()
                 }
               })
               .catch(err => {

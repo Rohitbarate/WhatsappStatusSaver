@@ -85,7 +85,7 @@ const SavedScreen = ({navigation}) => {
     };
   }, [savedFilter]);
 
-  const WhatsAppStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
+  
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;

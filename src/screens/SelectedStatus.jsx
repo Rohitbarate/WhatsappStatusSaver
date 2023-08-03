@@ -34,6 +34,7 @@ const SelectedStatus = ({route, navigation}) => {
   const [statusType, setStatusType] = useState(null);
   // const [newStatusName, setNewStatusName] = useState(statusName);
   const {getSavedStatuses} = useContext(AppContext);
+  const {ContentUriToAbsolutePathModule} = NativeModules;
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
@@ -128,56 +129,46 @@ const SelectedStatus = ({route, navigation}) => {
   };
 
   const handleShareToWhatsapp = async url => {
-    let link;
     try {
-      Share.isPackageInstalled('com.whatsapp')
-        .then(response => {
-          console.log({response});
-          response.isInstalled = true;
-          if (response.isInstalled) {
-            ToastAndroid.show('Sharing with Whatsapp', ToastAndroid.SHORT);
-            RNFS.stat(url)
-              .then(res => {
-                console.log({share: res});
-                link = res.path;
-              })
-              .catch(er => {
-                console.log({er});
-              });
-            Share.shareSingle({
-              url: uri,
-              social: Share.Social.WHATSAPP,
-            }).catch(err => {
-              err && console.log(err);
-            });
-          } else {
-            ToastAndroid.show('error: Whatsapp not found', ToastAndroid.LONG);
-          }
+      let absolutePath = url;
+      if (url.includes('content://')) {
+        absolutePath = await ContentUriToAbsolutePathModule.resolveUriPath(url);
+      }
+      console.log('Absolute Path:', absolutePath);
+      Share.shareSingle({
+        message: 'This Status is shared using WI STATUS SAVER',
+        url: absolutePath,
+        social: Share.Social.WHATSAPP,
+      })
+        .then(res => {
+          console.log(res);
         })
-        .catch(error => {
-          console.log(error);
-          // { error }
+        .catch(err => {
+          err && console.log(err);
         });
+
+      //
     } catch (error) {
       console.error('Error sharing to WhatsApp:', error.message);
     }
   };
 
   const handleShare = async url => {
-    console.log({url});
-    try {
-      const persistedUris =
-        await ScopedStoragePackage.getPersistedUriPermissions();
-      console.log(decodeURIComponent(persistedUris[0]) + '/' + statusName);
-      Share.open({
-        url: decodeURIComponent(persistedUris[0]) + '/' + statusName,
-        failOnCancel: false,
-      }).catch(error => {
-        ToastAndroid.show(error, ToastAndroid.LONG);
-      });
-    } catch (error) {
-      ToastAndroid.show(error, ToastAndroid.LONG);
+    let absolutePath = url;
+    if (url.includes('content://')) {
+      absolutePath = await ContentUriToAbsolutePathModule.resolveUriPath(url);
     }
+    console.log('Absolute Path:', absolutePath);
+    Share.open({
+      message: 'This Status is shared using WI STATUS SAVER',
+      url: absolutePath,
+    })
+      .then(res => {
+        console.log(res);
+      })
+      .catch(err => {
+        err && console.log(err);
+      });
   };
 
   const downloadStatusHandler = async (url, statusName) => {

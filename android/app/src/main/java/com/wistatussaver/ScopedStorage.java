@@ -72,7 +72,7 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void requestAccessToStatusesFolder(Promise promise) {
+    public void requestAccessToStatusesFolder(String whatsappType, Promise promise) {
         Activity currentActivity = getCurrentActivity();
         if (currentActivity == null) {
             promise.reject(E_ACTIVITY_DOES_NOT_EXIST, "Activity doesn't exist");
@@ -87,8 +87,12 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 //                Log.d("URI", "inside if()");
                 Intent intent = storageManager.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
-                String startDir = "Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses";
-
+                String startDir;
+                if (whatsappType == "whatsapp") {
+                    startDir = "Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses";
+                } else {
+                    startDir = "Android%2Fmedia%2Fcom.whatsapp.w4b%2FWhatsApp Business%2FMedia%2F.Statuses";
+                }
                 Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
 
                 String scheme = uri.toString();

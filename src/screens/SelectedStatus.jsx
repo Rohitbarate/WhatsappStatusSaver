@@ -247,7 +247,7 @@ const SelectedStatus = ({route, navigation}) => {
       ToastAndroid.show(
         res.message + 'at DCIM/wi_status_saver/',
         ToastAndroid.LONG,
-      );
+      )
       NativeModules.MediaScannerModule.scanFile(destUrl);
       checkIsSaved();
     });

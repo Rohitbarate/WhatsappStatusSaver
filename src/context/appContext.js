@@ -22,6 +22,7 @@ export const AppProvider = ({children}) => {
   const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [appVersion, setAppVersion] = useState(null);
+  const [appOpt, setAppOpt] = useState({type: 'whatsapp', isSelected: false});
   const [accessLoading, setAccessLoading] = useState(false);
   const [showDilogue, setShowDialogue] = useState(false);
   const [isLatestVersion, setIsLatestVersion] = useState(false);
@@ -48,7 +49,7 @@ export const AppProvider = ({children}) => {
     try {
       console.log('req start');
       setAccessLoading(true);
-      const res = await ScopedStorage.requestAccessToStatusesFolder();
+      const res = await ScopedStorage.requestAccessToStatusesFolder(appOpt.type);
       console.log({mainRes: res});
       if (res !== null && res.includes('.Statuses')) {
         // user selected correct folder
@@ -87,7 +88,6 @@ export const AppProvider = ({children}) => {
       ToastAndroid.show('Error !' + error, ToastAndroid.LONG);
     }
   };
-
   // get statuses (recent)
   const getStatuses = async () => {
     const appV = Platform.Version;
@@ -140,7 +140,6 @@ export const AppProvider = ({children}) => {
       console.log({getAllStatuses_error: {error}});
     }
   };
-
   //  check scoped storage permission
   const getAccess = async () => {
     try {
@@ -174,7 +173,7 @@ export const AppProvider = ({children}) => {
           // );
           return true;
         } else if (folderAccess !== null && persistedUris.length === 0) {
-          await AsyncStorage.clear();
+          await AsyncStorage.removeItem('folderAccess');
           setAccessLoading(false);
           setShowDialogue(true);
           return false;
@@ -306,30 +305,6 @@ export const AppProvider = ({children}) => {
     }
   };
 
-  const shouldShowRationale = async () => {
-    try {
-      const readStorageStatus = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      );
-      // await PermissionsAndroid.shouldShowRequestPermissionRationale(
-      //   PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      // );
-
-      const writeStorageStatus = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      );
-      // await PermissionsAndroid.shouldShowRequestPermissionRationale(
-      //   PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      // );
-
-      // Return true if any of the permissions still need a rationale
-      return readStorageStatus || writeStorageStatus;
-    } catch (err) {
-      console.warn('Error while checking rationale:', err);
-      return false;
-    }
-  };
-
   // Define the value object that will be provided to the consumer components
   const value = {
     requestScopedPermissionAccess,
@@ -358,6 +333,8 @@ export const AppProvider = ({children}) => {
     getSavedStatuses,
     savedFilter,
     setSavedFilter,
+    appOpt,
+    setAppOpt,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

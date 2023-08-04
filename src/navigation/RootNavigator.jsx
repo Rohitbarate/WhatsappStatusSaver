@@ -40,6 +40,7 @@ const RootNavigator = () => {
         headerTintColor: '#fff',
         
       }}>
+        
       <Drawer.Screen
         name="Whatsapp"
         component={HomeScreen}

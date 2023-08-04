@@ -2,33 +2,113 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
+  Platform,
   TouchableOpacity,
   Modal,
   Image,
   Alert,
 } from 'react-native';
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/FontAwesome';
 import Icon3 from 'react-native-vector-icons/Ionicons';
 import {AppContext} from '../context/appContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ScopedStoragePackage from 'react-native-scoped-storage';
 
-const SettingsScreen = () => {
-  // const {appVersion, setAppVer} = useContext(AppContext);
-  const [whatsappType, setWhatsappType] = useState('Whatsapp'); // options 1.Whatsapp 2. WA_business
+const SettingsScreen = ({navigation}) => {
+  const {
+    appOpt,
+    setAppOpt,
+    requestExtPermissions,
+    getAccess,
+    setIsLatestVersion,
+    setStatuses,
+  } = useContext(AppContext);
+  // const [appOpt.type, setwhatsappType] = useState('whatsapp'); // options 1.whatsapp 2. whatsappB
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [modelfor, setModelfor] = useState(null); // 'appType' & 'appTheme'
   const [appTheme, setAppTheme] = useState('Light'); // Light || Dark || System
 
-  const handleFilter = filterOption => {
-    setWhatsappType(filterOption);
-    setIsModelVisible(false);
+  // useEffect(() => {
+  //   var appV = Platform.Version;
+  // },[])
+
+  const checkWT = async () => {
+    // setLoading(true);
+
+    const whatsappOpt = await getWT();
+    console.log({whatsappOpt});
+    if (whatsappOpt !== null) {
+      setAppOpt(whatsappOpt);
+      handlePermission();
+      // setLoading(false);
+      // setWhatsappOpt(whatsappOpt);
+    } else {
+      // setLoading(false);
+      // setShowDilogue(true);
+    }
   };
+  // checkWT();
+  // }, []);
 
   const handleThemeFilter = filterOption => {
     setAppTheme(filterOption);
     setIsModelVisible(false);
+  };
+
+  const setAppOptHandler = async filterOption => {
+    console.log({...appOpt, type: filterOption});
+    if (filterOption !== appOpt.type) {
+      await AsyncStorage.removeItem('folderAccess');
+      const persistedUris =
+        await ScopedStoragePackage.getPersistedUriPermissions();
+      await ScopedStoragePackage.releasePersistableUriPermission(
+        persistedUris[0],
+      );
+      storeWT({...appOpt, type: filterOption});
+      setStatuses({
+        allStatuses: [],
+        currentMedia: '',
+        mediaName: '',
+      });
+    }
+    setIsModelVisible(false);
+  };
+
+  const storeWT = async value => {
+    try {
+      // value :{hasAccess:boolean,folderUrl:String}
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem('whatsappOpt', jsonValue);
+      checkWT();
+      navigation.jumpTo('Whatsapp');
+    } catch (e) {
+      console.log('error while storing whatsapp Options : ', e);
+    }
+  };
+  const getWT = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('whatsappOpt');
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      console.log('error while getting Whatsapp Options : ', e);
+    }
+  };
+
+  const handlePermission = async () => {
+    const appV = Platform.Version;
+    //  app-V less than android 10
+    if (appV < 29) {
+      setIsLatestVersion(false);
+      await requestExtPermissions();
+    } else {
+      setIsLatestVersion(true);
+      await getAccess();
+      // if (!r) {
+      //   await requestScopedPermissionAccess();
+      // }
+    }
   };
 
   return (
@@ -50,12 +130,12 @@ const SettingsScreen = () => {
           <Icon3 color={'#000'} size={30} name={'options-outline'} />
           <View style={styles.optCont}>
             <Text style={{color: '#000', fontSize: 16, fontWeight: '600'}}>
-              Whatsapp Type
+              whatsapp Type
             </Text>
             <Text style={{color: '#25c795', fontSize: 12}}>
-              {whatsappType === 'WA_business'
-                ? 'Whatsapp business'
-                : 'Whatsapp (Default)'}
+              {appOpt.type === 'whatsappB'
+                ? 'whatsapp business'
+                : 'whatsapp (Default)'}
             </Text>
           </View>
         </View>
@@ -65,7 +145,7 @@ const SettingsScreen = () => {
       <TouchableOpacity
         style={[styles.optContDiv]}
         onPress={() => {
-          Alert.alert('', 'Feature will coming soon, Stay tune' );
+          Alert.alert('', 'Feature will coming soon, Stay tune');
           // setIsModelVisible(true);
           // setModelfor('appTheme');
         }}>
@@ -133,18 +213,18 @@ const SettingsScreen = () => {
                 <View>
                   <TouchableOpacity
                     style={styles.filterItem}
-                    onPress={() => handleFilter('Whatsapp')}>
+                    onPress={() => setAppOptHandler('whatsapp')}>
                     <Icon2
                       name={'whatsapp'}
                       size={20}
-                      color={whatsappType === 'Whatsapp' ? 'green' : '#000'}
+                      color={appOpt.type === 'whatsapp' ? 'green' : '#000'}
                     />
                     <Text
                       style={[
                         styles.filterItemText,
-                        {color: whatsappType === 'Whatsapp' ? 'green' : '#000'},
+                        {color: appOpt.type === 'whatsapp' ? 'green' : '#000'},
                       ]}>
-                      Whatsapp
+                      whatsapp
                     </Text>
                   </TouchableOpacity>
                   <View
@@ -152,16 +232,16 @@ const SettingsScreen = () => {
                   />
                   <TouchableOpacity
                     style={styles.filterItem}
-                    onPress={() => handleFilter('WA_business')}>
+                    onPress={() => setAppOptHandler('whatsappB')}>
                     {/* <Icon2
                   name={'whatsapp'}
                   size={20}
-                  color={whatsappType === 'WA_business' ? 'green' : '#000'}
+                  color={appOpt.type === 'whatsappB' ? 'green' : '#000'}
                 /> */}
                     <Image
                       style={{height: 20, width: 20}}
                       source={
-                        whatsappType === 'WA_business'
+                        appOpt.type === 'whatsappB'
                           ? require('../assets/whatsapp-business-green.png')
                           : require('../assets/whatsapp-business.png')
                       }
@@ -170,11 +250,10 @@ const SettingsScreen = () => {
                       style={[
                         styles.filterItemText,
                         {
-                          color:
-                            whatsappType === 'WA_business' ? 'green' : '#000',
+                          color: appOpt.type === 'whatsappB' ? 'green' : '#000',
                         },
                       ]}>
-                      Whatsapp business
+                      whatsapp business
                     </Text>
                   </TouchableOpacity>
                   <View

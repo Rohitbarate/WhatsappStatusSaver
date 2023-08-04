@@ -30,10 +30,10 @@ const SavedScreen = ({navigation}) => {
     getSavedStatuses,
     savedFilter,
     setSavedFilter,
-    loading,
-    setLoading,
+    sLoading,
+    setSLoading,
   } = useContext(AppContext);
-  // const [loading, setLoading] = useState(false);
+  // const [sLoading, setSLoading] = useState(false);
   // const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
@@ -73,19 +73,17 @@ const SavedScreen = ({navigation}) => {
       backAction,
     );
 
-    // navigation.addListener('focus', () => {
-    //   getSavedStatuses();
-    //   console.log('focus');
-    // });
+    const unsubscribe = navigation.addListener('focus', () => {
+      getSavedStatuses();
+      console.log('focus');
+    });
 
     // Cleanup the event listener when the component is unmounted
     return () => {
-      // onScreenFocus;
+      unsubscribe;
       backHandler.remove();
     };
-  }, [savedFilter]);
-
-  
+  }, [savedFilter,navigation]);
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
@@ -94,7 +92,7 @@ const SavedScreen = ({navigation}) => {
   // const getSavedStatuses = async () => {
   //   try {
   //     console.log('getSavedStatuses called !');
-  //     setLoading(true);
+  //     setSLoading(true);
   //     // const appV = Platform.Version;
   //     // if (appV >= 29) {
   //     //   setIsExtPermissionGranted(true);
@@ -127,9 +125,9 @@ const SavedScreen = ({navigation}) => {
 
   //       console.log({filterFiles});
   //     }
-  //     setLoading(false);
+  //     setSLoading(false);
   //   } catch (error) {
-  //     setLoading(false);
+  //     setSLoading(false);
   //     console.log({getAllStatuses_error_saved: error});
   //   }
   // };
@@ -158,7 +156,7 @@ const SavedScreen = ({navigation}) => {
         alignItems: 'center',
         paddingHorizontal: 10,
       }}>
-      {loading && savedStatuses.allStatuses.length === 0 && (
+      {sLoading && savedStatuses.allStatuses.length === 0 && (
         <View
           style={{
             flex: 1,
@@ -224,8 +222,8 @@ const SavedScreen = ({navigation}) => {
       {savedStatuses.allStatuses.length !== 0 ? (
         <FlatList
           stickyHeaderHiddenOnScroll={true}
-          columnWrapperStyle={{flex:1,justifyContent: 'flex-start'}}
-          refreshing={loading}
+          columnWrapperStyle={{flex: 1, justifyContent: 'flex-start'}}
+          refreshing={sLoading}
           bounces={true}
           onRefresh={() => getSavedStatuses()}
           ref={flatListRef}
@@ -247,7 +245,7 @@ const SavedScreen = ({navigation}) => {
           )}
         />
       ) : (
-        !loading && (
+        !sLoading && (
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
             <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>

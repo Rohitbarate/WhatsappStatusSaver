@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View} from 'react-native';
+import { StatusBar, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -34,6 +34,7 @@ const HomeScreen = () => {
       initialRouteName='Recent'
       backBehavior='initialRoute'
       >
+         
       <TopTabBar.Screen
         name="Recent"
         component={RecentScreenStack}

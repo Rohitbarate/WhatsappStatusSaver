@@ -19,12 +19,14 @@ export const AppProvider = ({children}) => {
   const [isExtPermissionGranted, setIsExtPermissionGranted] = useState(false);
   const [isAccessGranted, setIsAccessGranted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sLoading, setSLoading] = useState(false);
   const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [appVersion, setAppVersion] = useState(null);
   const [appOpt, setAppOpt] = useState({type: 'whatsapp', isSelected: false});
   const [accessLoading, setAccessLoading] = useState(false);
   const [showDilogue, setShowDialogue] = useState(false);
+  const [showAppTypeDilogue, setShowAppTypeDilogue] = useState(false);
   const [isLatestVersion, setIsLatestVersion] = useState(false);
   const [statuses, setStatuses] = useState({
     allStatuses: [],
@@ -47,14 +49,26 @@ export const AppProvider = ({children}) => {
   // request scoped storage permission
   const requestScopedPermissionAccess = async () => {
     try {
-      console.log('req start');
+      console.log('req start : ', appOpt.type);
       setAccessLoading(true);
-      const res = await ScopedStorage.requestAccessToStatusesFolder(appOpt.type);
+      const res = await ScopedStorage.requestAccessToStatusesFolder(
+        appOpt.type,
+      );
       console.log({mainRes: res});
-      if (res !== null && res.includes('.Statuses')) {
+      if (
+        !res.success &&
+        res.msg === 'The selected app is not installed on the device.'
+      ) {
+        // user selected wrong app type
+        ToastAndroid.show(
+          'You selected App type not installed in your device.',
+          ToastAndroid.LONG,
+        );
+        await AsyncStorage.removeItem('folderAccess');
+        setShowAppTypeDilogue(true);
+      } else if (res !== null && res.success && res.uri.includes('.Statuses')) {
         // user selected correct folder
-        await storeData({hasAccess: true, folderUrl: res});
-        setAccessLoading(false);
+        await storeData({hasAccess: true, folderUrl: res.uri});
         ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
         setAccessLoading(false);
         setShowDialogue(false);
@@ -93,23 +107,28 @@ export const AppProvider = ({children}) => {
     const appV = Platform.Version;
     let files;
     setLoading(true);
-    const {hasAccess, folderUrl} = await getData();
-    setIsAccessGranted(hasAccess == null ? false : hasAccess);
+    const folderAccess = await getData();
+    if (folderAccess === null) {
+      setAccessLoading(false);
+      setShowDialogue(true);
+      return;
+    }
     const persistedUris =
       await ScopedStoragePackage.getPersistedUriPermissions();
-
     console.log({persistedUris});
-    console.log({hasAccess, folderUrl, isLatestVersion});
+    console.log({folderAccess, folderUrl, isLatestVersion});
     try {
       if (
-        hasAccess == true &&
+        folderAccess.hasAccess === true &&
         persistedUris.length !== 0 &&
         folderUrl.length !== 0 &&
         appV >= 29
       ) {
+        setLoading(true);
         console.log('fetch status');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
         files = await ScopedStoragePackage.listFiles(folderUrl, 'ascii');
+        setLoading(false);
       } else if (hasAccess == true && appV < 29) {
         console.log('fetch status old--v ');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
@@ -148,21 +167,25 @@ export const AppProvider = ({children}) => {
       // get folder link stored in asyncStorage
 
       const folderAccess = await getData();
-
+      if (folderAccess === null) {
+        setAccessLoading(false);
+        setShowDialogue(true);
+        return;
+      }
       // get access folder links stored in persistedUris
       const persistedUris =
         await ScopedStoragePackage.getPersistedUriPermissions();
       console.log({persistedUris});
 
-      if (folderAccess === null && persistedUris.length === 0) {
+      if (folderAccess.hasAccess === false && persistedUris.length === 0) {
         // user is new
         setAccessLoading(false);
-        // console.log('if');
+        console.log('if');
         setShowDialogue(true);
         return false;
       } else {
-        // console.log('else');
-        if (folderAccess !== null && persistedUris.length !== 0) {
+        console.log('else');
+        if (folderAccess.hasAccess === true && persistedUris.length !== 0) {
           // console.log('access');
           setAccessLoading(false);
           setShowDialogue(false);
@@ -264,7 +287,7 @@ export const AppProvider = ({children}) => {
   const getSavedStatuses = async () => {
     try {
       console.log('getSavedStatuses called !');
-      setLoading(true);
+      setSLoading(true);
       // const appV = Platform.Version;
       // if (appV >= 29) {
       //   setIsExtPermissionGranted(true);
@@ -298,9 +321,9 @@ export const AppProvider = ({children}) => {
 
         console.log({All: filterFiles});
       }
-      setLoading(false);
+      setSLoading(false);
     } catch (error) {
-      setLoading(false);
+      setSLoading(false);
       console.log({getAllStatuses_error_saved: error});
     }
   };
@@ -335,6 +358,10 @@ export const AppProvider = ({children}) => {
     setSavedFilter,
     appOpt,
     setAppOpt,
+    setSLoading,
+    sLoading,
+    showAppTypeDilogue,
+    setShowAppTypeDilogue,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

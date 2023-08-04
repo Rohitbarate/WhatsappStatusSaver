@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -16,11 +17,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.ActivityEventListener;
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.WritableMap;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -72,7 +75,7 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void requestAccessToStatusesFolder(String whatsappType, Promise promise) {
+    public void requestAccessToStatusesFolder(String appType, Promise promise) {
         Activity currentActivity = getCurrentActivity();
         if (currentActivity == null) {
             promise.reject(E_ACTIVITY_DOES_NOT_EXIST, "Activity doesn't exist");
@@ -81,18 +84,27 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
 
         folderPromise = promise;
 
+         // Check if the app is installed
+        if (!isAppInstalled(currentActivity, appType)) {
+            promise.resolve(getAppNotInstalledResponse());
+            return;
+        }
+
+        String specificStatusesDirectory = getAppSpecificStatusesDirectory(appType);
+        if (specificStatusesDirectory == null) {
+            // Invalid app type
+            promise.reject("INVALID_APP_TYPE", "Invalid app type: " + appType);
+            return;
+        }
+
         StorageManager storageManager = (StorageManager) currentActivity.getSystemService(currentActivity.STORAGE_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 //                Log.d("URI", "inside if()");
                 Intent intent = storageManager.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
-                String startDir;
-                if (whatsappType == "whatsapp") {
-                    startDir = "Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses";
-                } else {
-                    startDir = "Android%2Fmedia%2Fcom.whatsapp.w4b%2FWhatsApp Business%2FMedia%2F.Statuses";
-                }
+                String startDir = getAppSpecificStatusesDirectory(appType);
+
                 Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
 
                 String scheme = uri.toString();
@@ -105,12 +117,58 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
 
 
                 intent.putExtra("android.provider.extra.INITIAL_URI", uri);
-//                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.fromFile(new File(startDir)));
-//                reactApplicationContext.getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
                 currentActivity.startActivityForResult(intent, REQUEST_CODE_OPEN_DIRECTORY);
             }
         }
+    }
+
+    // Helper method to check if the app is installed
+    private boolean isAppInstalled(Context context, String appType) {
+        PackageManager packageManager = context.getPackageManager();
+        try {
+        packageManager.getPackageInfo("com.whatsapp", PackageManager.GET_ACTIVITIES);
+        return true;
+        } catch (PackageManager.NameNotFoundException e) {
+        return false;
+    }
+}
+
+// Helper method to get the app package based on the app type
+    private String getAppPackage(String appType) {
+        if ("whatsapp".equalsIgnoreCase(appType)) {
+            return "com.whatsapp";
+        } else if ("whatsappB".equalsIgnoreCase(appType)) {
+            return "com.whatsapp.w4b";
+        } else {
+            return null;
+        }
+    }
+
+    private static String getAppSpecificStatusesDirectory(String appType) {
+        if ("whatsapp".equalsIgnoreCase(appType)) {
+            return "Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses";
+        } else if ("whatsappB".equalsIgnoreCase(appType)) {
+            return "Android%2Fmedia%2Fcom.whatsapp.w4b%2FWhatsApp Business%2FMedia%2F.Statuses";
+        } else {
+            // Invalid app type
+            return null;
+        }
+    }
+
+    // Helper method to get the response object when the app is not installed
+    private WritableMap getAppNotInstalledResponse() {
+        WritableMap response = Arguments.createMap();
+        response.putBoolean("success", false);
+        response.putString("msg", "The selected app is not installed on the device.");
+        return response;
+    }
+
+    private WritableMap getAccessGrantedResponse(String uri) {
+        WritableMap response = Arguments.createMap();
+        response.putBoolean("success", true);
+        response.putString("msg", "Access granted!");
+        response.putString("uri", uri);
+        return response;
     }
 
     private final ActivityEventListener activityEventListener = new BaseActivityEventListener() {
@@ -134,7 +192,7 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
                         // Toast.makeText(context, "Success", Toast.LENGTH_SHORT).show();
                         Uri directoryUri = data.getData();
 
-                        folderPromise.resolve(directoryUri.toString());
+                        folderPromise.resolve(getAccessGrantedResponse(directoryUri.toString()));
                     } else {
                         folderPromise.reject(E_FAILED_TO_OPEN_FOLDER, "Failed to open folder");
                     }

@@ -35,16 +35,17 @@ const {ScopedStorage} = NativeModules;
 const App = () => {
   const {
     requestExtPermissions,
-    requestScopedPermissionAccess,
     getAccess,
-    isLatestVersion,
     setIsLatestVersion,
+    requestScopedPermissionAccess,
+    isLatestVersion,
     appOpt,
     setAppOpt,
+    showAppTypeDilogue, setShowAppTypeDilogue
   } = useContext(AppContext);
   // const [whatsappOpt, setWhatsappOpt] = useState(appOpt);
-  const [loading, setLoading] = useState(true);
-  const [showDilogue, setShowDilogue] = useState(false);
+  const [loading, setLoading] = useState(false);
+ 
 
   useEffect(() => {
     SplashScreen.hide();
@@ -66,6 +67,7 @@ const App = () => {
       }
     };
     const checkWT = async () => {
+      setLoading(true)
       const whatsappOpt = await getWT();
       console.log({whatsappOpt});
       if (whatsappOpt !== null) {
@@ -75,7 +77,7 @@ const App = () => {
         // setWhatsappOpt(whatsappOpt);
       } else {
         setLoading(false);
-        setShowDilogue(true);
+        setShowAppTypeDilogue(true);
       }
     };
 
@@ -104,15 +106,16 @@ const App = () => {
   const setAppOptHandler = () => {
     console.log({appOpt});
     storeWT(appOpt);
-    setShowDilogue(false)
+    setShowAppTypeDilogue(false)
     setLoading(false)
+    getAccess()
   };
 
   return (
     <NavigationContainer>
       <StatusBar backgroundColor={'#074e54'} barStyle={'light-content'} />
       {/* loading component */}
-      {showDilogue && (
+      {showAppTypeDilogue && (
         <View
           style={{
             flex: 1,

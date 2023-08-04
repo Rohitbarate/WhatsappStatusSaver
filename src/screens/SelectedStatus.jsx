@@ -56,7 +56,7 @@ const SelectedStatus = ({route, navigation}) => {
     //     : 'VID' + '_' + getCurrentTimeInFormat() + '_' + statusName,
     // );
 
-    console.log({getCurrentTimeInFormat: getCurrentTimeInFormat()});
+    console.log({uri});
     checkIsSaved();
 
     console.log({WhatsAppSavedStatusDirectory});
@@ -171,14 +171,12 @@ const SelectedStatus = ({route, navigation}) => {
       });
   };
 
-  const downloadStatusHandler = async (url, statusName) => {
+  const downloadStatusHandler = async () => {
     const persistedUris =
       await ScopedStoragePackage.getPersistedUriPermissions();
 
     // const sourceUrl = decodeURI(persistedUris[0]) + '/' + statusName;
-    const sourceUrl =
-      'content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses%2F' +
-      statusName;
+    const sourceUrl = uri;
     const destUrl = WhatsAppSavedStatusDirectory;
 
     // if (statusType === 'IMG') {
@@ -247,7 +245,7 @@ const SelectedStatus = ({route, navigation}) => {
       ToastAndroid.show(
         res.message + 'at DCIM/wi_status_saver/',
         ToastAndroid.LONG,
-      )
+      );
       NativeModules.MediaScannerModule.scanFile(destUrl);
       checkIsSaved();
     });
@@ -478,7 +476,7 @@ const SelectedStatus = ({route, navigation}) => {
           onPress={() => {
             isSaved
               ? deleteStatusHandler()
-              : downloadStatusHandler(uri, statusName);
+              : downloadStatusHandler();
           }}
           style={[
             styles.button,

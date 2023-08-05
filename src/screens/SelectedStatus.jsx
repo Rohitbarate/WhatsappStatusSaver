@@ -23,6 +23,7 @@ import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Pinchable from 'react-native-pinchable';
 import {AppContext} from '../context/appContext';
+import {useIsFocused, useRoute} from '@react-navigation/native';
 
 const SelectedStatus = ({route, navigation}) => {
   const {uri, statusName, mime} = route.params;
@@ -33,7 +34,8 @@ const SelectedStatus = ({route, navigation}) => {
   const [isSaved, setIsSaved] = useState(false);
   const [statusType, setStatusType] = useState(null);
   // const [newStatusName, setNewStatusName] = useState(statusName);
-  const {getSavedStatuses} = useContext(AppContext);
+  const {getSavedStatuses, setScrollEnabled} =
+    useContext(AppContext);
   const {ContentUriToAbsolutePathModule} = NativeModules;
 
   const video = /\.(mp4)$/i;
@@ -83,34 +85,43 @@ const SelectedStatus = ({route, navigation}) => {
       backAction,
     );
 
+    const unsubscribe = navigation.addListener('focus', () => {
+      setScrollEnabled(false)
+    });
+
     // Cleanup the event listener when the component is unmounted
-    return () => backHandler.remove();
+    return () => {
+      backHandler.remove();
+      unsubscribe;
+      setScrollEnabled(true)
+    };
   }, []);
+
 
   const videoRef = useRef(null);
 
-  const getCurrentTimeInFormat = () => {
-    const date = new Date();
+  // const getCurrentTimeInFormat = () => {
+  //   const date = new Date();
 
-    // Helper function to pad numbers with leading zeros
-    function pad(number) {
-      if (number < 10) {
-        return '0' + number;
-      }
-      return number;
-    }
+  //   // Helper function to pad numbers with leading zeros
+  //   function pad(number) {
+  //     if (number < 10) {
+  //       return '0' + number;
+  //     }
+  //     return number;
+  //   }
 
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1); // Months are zero-based, so we add 1
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
+  //   const year = date.getFullYear();
+  //   const month = pad(date.getMonth() + 1); // Months are zero-based, so we add 1
+  //   const day = pad(date.getDate());
+  //   const hours = pad(date.getHours());
+  //   const minutes = pad(date.getMinutes());
+  //   const seconds = pad(date.getSeconds());
 
-    // Combine the components into the desired format
-    const formattedTime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
-    return formattedTime;
-  };
+  //   // Combine the components into the desired format
+  //   const formattedTime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+  //   return formattedTime;
+  // };
 
   const checkIsSaved = async () => {
     const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
@@ -275,6 +286,10 @@ const SelectedStatus = ({route, navigation}) => {
     videoRef.current.seek(-videoProp.seekableDuration);
   };
 
+  const videoError = ()=>{
+    ToastAndroid.show("Status can not be loaded,try again", ToastAndroid.SHORT);
+  }
+
   const deleteStatusHandler = async () => {
     Alert.alert(
       '',
@@ -358,6 +373,7 @@ const SelectedStatus = ({route, navigation}) => {
             onProgress={onVideoPlaying}
             onEnd={props => onVideoEnd(props)}
             onReadyForDisplay={onReadyForDisplay}
+            onError={videoError}  
           />
           {showControls && (
             <View style={styles.customControlView}>
@@ -474,9 +490,7 @@ const SelectedStatus = ({route, navigation}) => {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
-            isSaved
-              ? deleteStatusHandler()
-              : downloadStatusHandler();
+            isSaved ? deleteStatusHandler() : downloadStatusHandler();
           }}
           style={[
             styles.button,

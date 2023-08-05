@@ -85,10 +85,10 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
         folderPromise = promise;
 
          // Check if the app is installed
-        if (!isAppInstalled(currentActivity, appType)) {
-            promise.resolve(getAppNotInstalledResponse());
-            return;
-        }
+        // if (!isAppInstalled(currentActivity, appType)) {
+        //     promise.resolve(getAppNotInstalledResponse());
+        //     return;
+        // }
 
         String specificStatusesDirectory = getAppSpecificStatusesDirectory(appType);
         if (specificStatusesDirectory == null) {
@@ -123,31 +123,31 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
     }
 
     // Helper method to check if the app is installed
-    private boolean isAppInstalled(Context context, String appType) {
-        PackageManager packageManager = context.getPackageManager();
-        try {
-        packageManager.getPackageInfo("com.whatsapp", PackageManager.GET_ACTIVITIES);
-        return true;
-        } catch (PackageManager.NameNotFoundException e) {
-        return false;
-    }
-}
+//     private boolean isAppInstalled(Context context, String appType) {
+//         PackageManager packageManager = context.getPackageManager();
+//         try {
+//         packageManager.getPackageInfo("com.whatsapp", PackageManager.GET_ACTIVITIES);
+//         return true;
+//         } catch (PackageManager.NameNotFoundException e) {
+//         return false;
+//     }
+// }
 
 // Helper method to get the app package based on the app type
-    private String getAppPackage(String appType) {
-        if ("whatsapp".equalsIgnoreCase(appType)) {
-            return "com.whatsapp";
-        } else if ("whatsappB".equalsIgnoreCase(appType)) {
-            return "com.whatsapp.w4b";
-        } else {
-            return null;
-        }
-    }
+    // private String getAppPackage(String appType) {
+    //     if ("whatsapp".equalsIgnoreCase(appType)) {
+    //         return "com.whatsapp";
+    //     } else if ("whatsappB".equalsIgnoreCase(appType)) {
+    //         return "com.whatsapp.w4b";
+    //     } else {
+    //         return null;
+    //     }
+    // }
 
     private static String getAppSpecificStatusesDirectory(String appType) {
-        if ("whatsapp".equalsIgnoreCase(appType)) {
+        if (appType =="whatsapp") {
             return "Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses";
-        } else if ("whatsappB".equalsIgnoreCase(appType)) {
+        } else if (appType =="whatsappB") {
             return "Android%2Fmedia%2Fcom.whatsapp.w4b%2FWhatsApp Business%2FMedia%2F.Statuses";
         } else {
             // Invalid app type

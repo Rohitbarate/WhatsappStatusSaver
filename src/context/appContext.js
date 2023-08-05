@@ -10,6 +10,8 @@ const {ScopedStorage} = NativeModules;
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFS from 'react-native-fs';
+import {RNLauncherKitHelper} from 'react-native-launcher-kit';
+import {useNavigation} from '@react-navigation/native';
 
 // Create the user context
 export const AppContext = createContext();
@@ -38,6 +40,7 @@ export const AppProvider = ({children}) => {
     currentMedia: '',
     mediaName: '',
   });
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // const WhatsAppSavedStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
   const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
@@ -90,7 +93,7 @@ export const AppProvider = ({children}) => {
       }
       // return res;
     } catch (error) {
-      console.log({error});
+      console.log({requestScopedPermissionAccess_error: error});
       const persistedUris =
         await ScopedStoragePackage.getPersistedUriPermissions();
       await ScopedStoragePackage.releasePersistableUriPermission(
@@ -116,23 +119,30 @@ export const AppProvider = ({children}) => {
     const persistedUris =
       await ScopedStoragePackage.getPersistedUriPermissions();
     console.log({persistedUris});
-    console.log({folderAccess, folderUrl, isLatestVersion});
+    console.log({
+      folderAccess,
+      folderUrl: folderAccess.folderUrl,
+      isLatestVersion,
+    });
     try {
       if (
         folderAccess.hasAccess === true &&
         persistedUris.length !== 0 &&
-        folderUrl.length !== 0 &&
+        folderAccess.folderUrl.length !== 0 &&
         appV >= 29
       ) {
         setLoading(true);
         console.log('fetch status');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
-        files = await ScopedStoragePackage.listFiles(folderUrl, 'ascii');
+        files = await ScopedStoragePackage.listFiles(
+          folderAccess.folderUrl,
+          'ascii',
+        );
         setLoading(false);
       } else if (hasAccess == true && appV < 29) {
         console.log('fetch status old--v ');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
-        files = await RNFS.readDir(folderUrl);
+        files = await RNFS.readDir(folderAccess.folderUrl);
         setLoading(false);
       } else {
         console.log('else');
@@ -159,6 +169,7 @@ export const AppProvider = ({children}) => {
       console.log({getAllStatuses_error: {error}});
     }
   };
+
   //  check scoped storage permission
   const getAccess = async () => {
     try {
@@ -219,6 +230,7 @@ export const AppProvider = ({children}) => {
     }
   };
 
+  // save storage permission
   const storeData = async value => {
     try {
       // value :{hasAccess:boolean,folderUrl:String}
@@ -229,7 +241,7 @@ export const AppProvider = ({children}) => {
       console.log('error while storing folder address : ', e);
     }
   };
-
+  // get storage permission
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('folderAccess');
@@ -283,7 +295,7 @@ export const AppProvider = ({children}) => {
       setIsExtPermissionGranted(false);
     }
   };
-
+  // get saved statuses in device DCIM/wi_status_saver
   const getSavedStatuses = async () => {
     try {
       console.log('getSavedStatuses called !');
@@ -328,6 +340,46 @@ export const AppProvider = ({children}) => {
     }
   };
 
+  // save app type
+  const storeWT = async value => {
+    try {
+      // value :{hasAccess:boolean,folderUrl:String}
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem('whatsappOpt', jsonValue);
+      // checkWT();
+    } catch (e) {
+      console.log('error while storing whatsapp Options : ', e);
+    }
+  };
+
+  // get app type
+  const getWT = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('whatsappOpt');
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      console.log('error while getting Whatsapp Options : ', e);
+    }
+  };
+
+  //  change app type
+  const changeAppOptHandler = async apptype => {
+    console.log({changeAppOptHandler_log: apptype});
+    const result = await RNLauncherKitHelper.checkIfPackageInstalled(
+      apptype === 'whatsapp' ? 'com.whatsapp' : 'com.whatsapp.w4b',
+    );
+    console.log({result});
+    if (!result) {
+      ToastAndroid.show(
+        `${
+          apptype == 'whatsappB' ? 'Whatsapp Business' : apptype
+        } not installed in your device.`,
+        ToastAndroid.LONG,
+      );
+    }
+    return result;
+  };
+
   // Define the value object that will be provided to the consumer components
   const value = {
     requestScopedPermissionAccess,
@@ -362,6 +414,11 @@ export const AppProvider = ({children}) => {
     sLoading,
     showAppTypeDilogue,
     setShowAppTypeDilogue,
+    changeAppOptHandler,
+    getWT,
+    storeWT,
+    scrollEnabled,
+    setScrollEnabled,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

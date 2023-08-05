@@ -9,6 +9,7 @@ import {
   StatusBar,
   Platform,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState, useContext} from 'react';
 import {
@@ -22,11 +23,11 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
-import {ActivityIndicator} from 'react-native-paper';
 import RootNavigator from './src/navigation/RootNavigator';
 import SplashScreen from 'react-native-splash-screen';
 import {AppContext} from './src/context/appContext';
 import Icon from 'react-native-vector-icons/AntDesign';
+import {RNLauncherKitHelper} from 'react-native-launcher-kit';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -41,14 +42,20 @@ const App = () => {
     isLatestVersion,
     appOpt,
     setAppOpt,
-    showAppTypeDilogue, setShowAppTypeDilogue
+    showAppTypeDilogue,
+    setShowAppTypeDilogue,
+    changeAppOptHandler,
+    getWT,
+    storeWT,
+    setStatuses,
   } = useContext(AppContext);
-  // const [whatsappOpt, setWhatsappOpt] = useState(appOpt);
+  const [tempAppType, setTempAppType] = useState(appOpt.type);
   const [loading, setLoading] = useState(false);
- 
+  const [filterLoading, setFilterLoading] = useState(false);
 
   useEffect(() => {
     SplashScreen.hide();
+
     const appV = Platform.Version;
     // const appV = 28
     // check app version
@@ -67,13 +74,14 @@ const App = () => {
       }
     };
     const checkWT = async () => {
-      setLoading(true)
+      // await AsyncStorage.removeItem('whatsappOpt')
+      setLoading(true);
       const whatsappOpt = await getWT();
       console.log({whatsappOpt});
       if (whatsappOpt !== null) {
         setAppOpt(whatsappOpt);
         handlePermission();
-        setLoading(false)
+        setLoading(false);
         // setWhatsappOpt(whatsappOpt);
       } else {
         setLoading(false);
@@ -84,32 +92,69 @@ const App = () => {
     checkWT();
   }, []);
 
-  const storeWT = async value => {
-    try {
-      // value :{hasAccess:boolean,folderUrl:String}
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem('whatsappOpt', jsonValue);
-      return;
-    } catch (e) {
-      console.log('error while storing Whatsapp Options : ', e);
+  // const storeWT = async value => {
+  //   try {
+  //     // value :{hasAccess:boolean,folderUrl:String}
+  //     const jsonValue = JSON.stringify(value);
+  //     await AsyncStorage.setItem('whatsappOpt', jsonValue);
+  //     return;
+  //   } catch (e) {
+  //     console.log('error while storing Whatsapp Options : ', e);
+  //   }
+  // };
+
+  // const getWT = async () => {
+  //   try {
+  //     const jsonValue = await AsyncStorage.getItem('whatsappOpt');
+  //     return jsonValue != null ? JSON.parse(jsonValue) : null;
+  //   } catch (e) {
+  //     console.log('error while getting Whatsapp Options : ', e);
+  //   }
+  // };
+
+  // const setAppOptHandler = () => {
+  //   console.log({appOpt});
+  //   storeWT(appOpt);
+  //   setShowAppTypeDilogue(false);
+  //   setLoading(false);
+  //   getAccess();
+  // };
+
+  const setAppOptHandler = async () => {
+    setFilterLoading(true);
+    // console.log({appOpt: appOpt.type, filterOption_type: tempAppType});
+    const result = await changeAppOptHandler(tempAppType);
+    if (result) {
+      setFilterLoading(false);
+      console.log('going in if');
+      await AsyncStorage.removeItem('folderAccess');
+      const persistedUris =
+        await ScopedStoragePackage.getPersistedUriPermissions();
+      await ScopedStoragePackage.releasePersistableUriPermission(
+        persistedUris[0],
+      );
+      storeWT({isSelected: true, type: tempAppType});
+      // navigation.jumpTo('Whatsapp');
+      setStatuses({
+        allStatuses: [],
+        currentMedia: '',
+        mediaName: '',
+      });
+      setFilterLoading(false);
+      setShowAppTypeDilogue(false);
+      setLoading(false);
+      getAccess();
+    } else {
+      setFilterLoading(false);
     }
   };
 
-  const getWT = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('whatsappOpt');
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch (e) {
-      console.log('error while getting Whatsapp Options : ', e);
-    }
-  };
-  const setAppOptHandler = () => {
-    console.log({appOpt});
-    storeWT(appOpt);
-    setShowAppTypeDilogue(false)
-    setLoading(false)
-    getAccess()
-  };
+  // const changeAppOptHandler = async (apptype) => {
+  //   const result = await RNLauncherKitHelper.checkIfPackageInstalled(
+  //    apptype ==="whatsapp"? 'com.whatsapp':"com.whatsapp.w4b"
+  //   );
+  //   console.log({result});
+  // };
 
   return (
     <NavigationContainer>
@@ -171,12 +216,12 @@ const App = () => {
 
               <TouchableOpacity
                 activeOpacity={0.9}
-                onPress={() => setAppOpt({type: 'whatsapp', isSelected: true})}
+                onPress={() => setTempAppType('whatsapp')}
                 style={[
                   styles.prmBtn,
                   {
-                    borderColor: appOpt.type === 'whatsapp' && '#25D366',
-                    borderWidth: appOpt.type === 'whatsapp' ? 4 : 0,
+                    borderColor: tempAppType === 'whatsapp' && '#25D366',
+                    borderWidth: tempAppType === 'whatsapp' ? 4 : 0,
                   },
                 ]}>
                 <Text
@@ -191,13 +236,13 @@ const App = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.9}
-                onPress={() => setAppOpt({type: 'whatsappB', isSelected: true})}
+                onPress={() => setTempAppType('whatsappB')}
                 style={[
                   styles.prmBtn,
                   {
-                    borderColor: appOpt.type === 'whatsappB' && '#25D366',
+                    borderColor: tempAppType === 'whatsappB' && '#25D366',
                     marginTop: 5,
-                    borderWidth: appOpt.type === 'whatsappB' ? 4 : 0,
+                    borderWidth: tempAppType === 'whatsappB' ? 4 : 0,
                   },
                 ]}>
                 <Text
@@ -211,31 +256,38 @@ const App = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                alignSelf: 'flex-end',
-                borderWidth: 1,
-                borderColor: '#fff',
-                paddingVertical: 5,
-                paddingHorizontal: 10,
-                borderRadius: 10,
-                marginTop: 20,
-              }}
-              onPress={setAppOptHandler}>
-              <Text
+            {filterLoading ? (
+              <View style={{alignSelf: 'flex-end', marginTop: 20}}>
+                <ActivityIndicator color={'#fff'} size={30} />
+              </View>
+            ) : (
+              <TouchableOpacity
                 style={{
-                  color: '#fff',
-                  fontSize: 18,
-                  marginRight: 5,
-                  fontWeight: '500',
-                }}>
-                Next
-              </Text>
-              <Icon name="arrowright" size={20} color="#fff" />
-            </TouchableOpacity>
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  alignSelf: 'flex-end',
+                  borderWidth: 1,
+                  borderColor: '#fff',
+                  paddingVertical: 5,
+                  paddingHorizontal: 10,
+                  borderRadius: 10,
+                  marginTop: 20,
+                }}
+                activeOpacity={0.5}
+                onPress={() => setAppOptHandler()}>
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontSize: 18,
+                    marginRight: 5,
+                    fontWeight: '500',
+                  }}>
+                  Next
+                </Text>
+                <Icon name="arrowright" size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}

@@ -7,6 +7,7 @@ import {
   Modal,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useState, useContext, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -24,11 +25,15 @@ const SettingsScreen = ({navigation}) => {
     getAccess,
     setIsLatestVersion,
     setStatuses,
+    changeAppOptHandler,
+    getWT,
+    storeWT,
   } = useContext(AppContext);
   // const [appOpt.type, setwhatsappType] = useState('whatsapp'); // options 1.whatsapp 2. whatsappB
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [modelfor, setModelfor] = useState(null); // 'appType' & 'appTheme'
   const [appTheme, setAppTheme] = useState('Light'); // Light || Dark || System
+  const [filterLoading, setFilterLoading] = useState(false);
 
   // useEffect(() => {
   //   var appV = Platform.Version;
@@ -58,8 +63,14 @@ const SettingsScreen = ({navigation}) => {
   };
 
   const setAppOptHandler = async filterOption => {
-    console.log({...appOpt, type: filterOption});
-    if (filterOption !== appOpt.type) {
+    console.log({appOpt: appOpt.type, filterOption_type: filterOption});
+    setFilterLoading(true);
+    if (
+      filterOption !== appOpt.type &&
+      (await changeAppOptHandler(filterOption))
+    ) {
+      setFilterLoading(false);
+      console.log('going in if');
       await AsyncStorage.removeItem('folderAccess');
       const persistedUris =
         await ScopedStoragePackage.getPersistedUriPermissions();
@@ -67,34 +78,36 @@ const SettingsScreen = ({navigation}) => {
         persistedUris[0],
       );
       storeWT({...appOpt, type: filterOption});
+      navigation.jumpTo('Whatsapp');
       setStatuses({
         allStatuses: [],
         currentMedia: '',
         mediaName: '',
       });
     }
+    setFilterLoading(false);
     setIsModelVisible(false);
   };
 
-  const storeWT = async value => {
-    try {
-      // value :{hasAccess:boolean,folderUrl:String}
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem('whatsappOpt', jsonValue);
-      checkWT();
-      navigation.jumpTo('Whatsapp');
-    } catch (e) {
-      console.log('error while storing whatsapp Options : ', e);
-    }
-  };
-  const getWT = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('whatsappOpt');
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch (e) {
-      console.log('error while getting Whatsapp Options : ', e);
-    }
-  };
+  // const storeWT = async value => {
+  //   try {
+  //     // value :{hasAccess:boolean,folderUrl:String}
+  //     const jsonValue = JSON.stringify(value);
+  //     await AsyncStorage.setItem('whatsappOpt', jsonValue);
+  //     checkWT();
+  //     navigation.jumpTo('Whatsapp');
+  //   } catch (e) {
+  //     console.log('error while storing whatsapp Options : ', e);
+  //   }
+  // };
+  // const getWT = async () => {
+  //   try {
+  //     const jsonValue = await AsyncStorage.getItem('whatsappOpt');
+  //     return jsonValue != null ? JSON.parse(jsonValue) : null;
+  //   } catch (e) {
+  //     console.log('error while getting Whatsapp Options : ', e);
+  //   }
+  // };
 
   const handlePermission = async () => {
     const appV = Platform.Version;
@@ -209,58 +222,67 @@ const SettingsScreen = ({navigation}) => {
                 }}
               />
               {/* app type model */}
-              {modelfor == 'appType' && (
-                <View>
-                  <TouchableOpacity
-                    style={styles.filterItem}
-                    onPress={() => setAppOptHandler('whatsapp')}>
-                    <Icon2
-                      name={'whatsapp'}
-                      size={20}
-                      color={appOpt.type === 'whatsapp' ? 'green' : '#000'}
+              {modelfor == 'appType' &&
+                (filterLoading ? (
+                  <View>
+                    <ActivityIndicator color={'green'} size={30} />
+                  </View>
+                ) : (
+                  <View>
+                    <TouchableOpacity
+                      style={styles.filterItem}
+                      onPress={() => setAppOptHandler('whatsapp')}>
+                      <Icon2
+                        name={'whatsapp'}
+                        size={20}
+                        color={appOpt.type === 'whatsapp' ? 'green' : '#000'}
+                      />
+                      <Text
+                        style={[
+                          styles.filterItemText,
+                          {
+                            color:
+                              appOpt.type === 'whatsapp' ? 'green' : '#000',
+                          },
+                        ]}>
+                        whatsapp
+                      </Text>
+                    </TouchableOpacity>
+                    <View
+                      style={{backgroundColor: 'grey', height: 1, marginTop: 8}}
                     />
-                    <Text
-                      style={[
-                        styles.filterItemText,
-                        {color: appOpt.type === 'whatsapp' ? 'green' : '#000'},
-                      ]}>
-                      whatsapp
-                    </Text>
-                  </TouchableOpacity>
-                  <View
-                    style={{backgroundColor: 'grey', height: 1, marginTop: 8}}
-                  />
-                  <TouchableOpacity
-                    style={styles.filterItem}
-                    onPress={() => setAppOptHandler('whatsappB')}>
-                    {/* <Icon2
+                    <TouchableOpacity
+                      style={styles.filterItem}
+                      onPress={() => setAppOptHandler('whatsappB')}>
+                      {/* <Icon2
                   name={'whatsapp'}
                   size={20}
                   color={appOpt.type === 'whatsappB' ? 'green' : '#000'}
                 /> */}
-                    <Image
-                      style={{height: 20, width: 20}}
-                      source={
-                        appOpt.type === 'whatsappB'
-                          ? require('../assets/whatsapp-business-green.png')
-                          : require('../assets/whatsapp-business.png')
-                      }
+                      <Image
+                        style={{height: 20, width: 20}}
+                        source={
+                          appOpt.type === 'whatsappB'
+                            ? require('../assets/whatsapp-business-green.png')
+                            : require('../assets/whatsapp-business.png')
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.filterItemText,
+                          {
+                            color:
+                              appOpt.type === 'whatsappB' ? 'green' : '#000',
+                          },
+                        ]}>
+                        whatsapp business
+                      </Text>
+                    </TouchableOpacity>
+                    <View
+                      style={{backgroundColor: 'grey', height: 1, marginTop: 8}}
                     />
-                    <Text
-                      style={[
-                        styles.filterItemText,
-                        {
-                          color: appOpt.type === 'whatsappB' ? 'green' : '#000',
-                        },
-                      ]}>
-                      whatsapp business
-                    </Text>
-                  </TouchableOpacity>
-                  <View
-                    style={{backgroundColor: 'grey', height: 1, marginTop: 8}}
-                  />
-                </View>
-              )}
+                  </View>
+                ))}
 
               {/* app theme model */}
               {modelfor == 'appTheme' && (

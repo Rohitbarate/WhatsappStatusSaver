@@ -122,7 +122,7 @@ const App = () => {
 
   const setAppOptHandler = async () => {
     setFilterLoading(true);
-    // console.log({appOpt: appOpt.type, filterOption_type: tempAppType});
+    console.log({appOpt: appOpt.type, filterOption_type: tempAppType});
     const result = await changeAppOptHandler(tempAppType);
     if (result) {
       setFilterLoading(false);

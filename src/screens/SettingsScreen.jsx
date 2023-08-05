@@ -63,12 +63,10 @@ const SettingsScreen = ({navigation}) => {
   };
 
   const setAppOptHandler = async filterOption => {
-    console.log({appOpt: appOpt.type, filterOption_type: filterOption});
-    setFilterLoading(true);
-    if (
-      filterOption !== appOpt.type &&
-      (await changeAppOptHandler(filterOption))
-    ) {
+    // console.log({appOpt: appOpt.type, filterOption_type: filterOption});
+   try {
+    const result = await changeAppOptHandler(filterOption);
+    if (filterOption !== appOpt.type && result) {
       setFilterLoading(false);
       console.log('going in if');
       await AsyncStorage.removeItem('folderAccess');
@@ -87,27 +85,14 @@ const SettingsScreen = ({navigation}) => {
     }
     setFilterLoading(false);
     setIsModelVisible(false);
+   } catch (error) {
+    console.log({error});
+    setFilterLoading(false);
+    setIsModelVisible(false);
+   }
   };
 
-  // const storeWT = async value => {
-  //   try {
-  //     // value :{hasAccess:boolean,folderUrl:String}
-  //     const jsonValue = JSON.stringify(value);
-  //     await AsyncStorage.setItem('whatsappOpt', jsonValue);
-  //     checkWT();
-  //     navigation.jumpTo('Whatsapp');
-  //   } catch (e) {
-  //     console.log('error while storing whatsapp Options : ', e);
-  //   }
-  // };
-  // const getWT = async () => {
-  //   try {
-  //     const jsonValue = await AsyncStorage.getItem('whatsappOpt');
-  //     return jsonValue != null ? JSON.parse(jsonValue) : null;
-  //   } catch (e) {
-  //     console.log('error while getting Whatsapp Options : ', e);
-  //   }
-  // };
+ 
 
   const handlePermission = async () => {
     const appV = Platform.Version;
@@ -231,7 +216,10 @@ const SettingsScreen = ({navigation}) => {
                   <View>
                     <TouchableOpacity
                       style={styles.filterItem}
-                      onPress={() => setAppOptHandler('whatsapp')}>
+                      onPress={() => {
+                        setFilterLoading(true);
+                        setAppOptHandler('whatsapp');
+                      }}>
                       <Icon2
                         name={'whatsapp'}
                         size={20}
@@ -253,7 +241,10 @@ const SettingsScreen = ({navigation}) => {
                     />
                     <TouchableOpacity
                       style={styles.filterItem}
-                      onPress={() => setAppOptHandler('whatsappB')}>
+                      onPress={() => {
+                        setFilterLoading(true);
+                        setAppOptHandler('whatsappB');
+                      }}>
                       {/* <Icon2
                   name={'whatsapp'}
                   size={20}

@@ -145,9 +145,9 @@ public class ScopedStorage extends ReactContextBaseJavaModule {
     // }
 
     private static String getAppSpecificStatusesDirectory(String appType) {
-        if (appType =="whatsapp") {
+        if ("whatsapp".equalsIgnoreCase(appType)) {
             return "Android%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses";
-        } else if (appType =="whatsappB") {
+        } else if ("whatsappB".equalsIgnoreCase(appType)) {
             return "Android%2Fmedia%2Fcom.whatsapp.w4b%2FWhatsApp Business%2FMedia%2F.Statuses";
         } else {
             // Invalid app type

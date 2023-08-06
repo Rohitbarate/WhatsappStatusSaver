@@ -34,8 +34,7 @@ const SelectedStatus = ({route, navigation}) => {
   const [isSaved, setIsSaved] = useState(false);
   const [statusType, setStatusType] = useState(null);
   // const [newStatusName, setNewStatusName] = useState(statusName);
-  const {getSavedStatuses, setScrollEnabled} =
-    useContext(AppContext);
+  const {getSavedStatuses, setScrollEnabled} = useContext(AppContext);
   const {ContentUriToAbsolutePathModule} = NativeModules;
 
   const video = /\.(mp4)$/i;
@@ -43,22 +42,11 @@ const SelectedStatus = ({route, navigation}) => {
 
   const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
 
-  // LogBox.ignoreLogs([
-  //   'Non-serializable values were found in the navigation state',
-  // ]);
-
   useEffect(() => {
     statusName.indexOf('.mp4') == -1
       ? setStatusType('IMG')
       : setStatusType('VID');
 
-    // setNewStatusName(
-    //   statusName.indexOf('.mp4') == -1
-    //     ? 'IMG' + '_' + getCurrentTimeInFormat() + '_' + statusName
-    //     : 'VID' + '_' + getCurrentTimeInFormat() + '_' + statusName,
-    // );
-
-    console.log({uri});
     checkIsSaved();
 
     console.log({WhatsAppSavedStatusDirectory});
@@ -85,45 +73,22 @@ const SelectedStatus = ({route, navigation}) => {
       backAction,
     );
 
-    const unsubscribe = navigation.addListener('focus', () => {
-      setScrollEnabled(false)
-    });
+    // const unsubscribe = navigation.addListener('focus', () => {
+    // setScrollEnabled(false)
+    // });
 
     // Cleanup the event listener when the component is unmounted
     return () => {
       backHandler.remove();
-      unsubscribe;
-      setScrollEnabled(true)
+      // unsubscribe;
+      // setScrollEnabled(true)
     };
   }, []);
 
-
   const videoRef = useRef(null);
 
-  // const getCurrentTimeInFormat = () => {
-  //   const date = new Date();
-
-  //   // Helper function to pad numbers with leading zeros
-  //   function pad(number) {
-  //     if (number < 10) {
-  //       return '0' + number;
-  //     }
-  //     return number;
-  //   }
-
-  //   const year = date.getFullYear();
-  //   const month = pad(date.getMonth() + 1); // Months are zero-based, so we add 1
-  //   const day = pad(date.getDate());
-  //   const hours = pad(date.getHours());
-  //   const minutes = pad(date.getMinutes());
-  //   const seconds = pad(date.getSeconds());
-
-  //   // Combine the components into the desired format
-  //   const formattedTime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
-  //   return formattedTime;
-  // };
-
   const checkIsSaved = async () => {
+    // setScrollEnabled(false)
     const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
     console.log({savedFiles});
     console.log({statusName});
@@ -254,11 +219,12 @@ const SelectedStatus = ({route, navigation}) => {
         return;
       }
       ToastAndroid.show(
-        res.message + 'at DCIM/wi_status_saver/',
+        res.message + 'at /storage/emulated/0/DCIM/wi_status_saver/',
         ToastAndroid.LONG,
       );
       NativeModules.MediaScannerModule.scanFile(destUrl);
       checkIsSaved();
+      getSavedStatuses();
     });
   };
 
@@ -267,6 +233,7 @@ const SelectedStatus = ({route, navigation}) => {
   };
 
   const onReadyForDisplay = prop => {
+    console.log("onReadyForDisplay");
     setIsVideoEnded(false);
     setShowControls(true);
     hideControls();
@@ -286,9 +253,9 @@ const SelectedStatus = ({route, navigation}) => {
     videoRef.current.seek(-videoProp.seekableDuration);
   };
 
-  const videoError = ()=>{
-    ToastAndroid.show("Status can not be loaded,try again", ToastAndroid.SHORT);
-  }
+  const videoError = () => {
+    ToastAndroid.show('Status can not be loaded,try again', ToastAndroid.SHORT);
+  };
 
   const deleteStatusHandler = async () => {
     Alert.alert(
@@ -367,13 +334,13 @@ const SelectedStatus = ({route, navigation}) => {
             style={styles.video}
             repeat={isVideoEnded}
             paused={isVideoPaused}
-            fullscreen={true}
+            // fullscreen={true}
             posterResizeMode="contain"
             resizeMode="contain"
             onProgress={onVideoPlaying}
             onEnd={props => onVideoEnd(props)}
             onReadyForDisplay={onReadyForDisplay}
-            onError={videoError}  
+            onError={videoError}
           />
           {showControls && (
             <View style={styles.customControlView}>

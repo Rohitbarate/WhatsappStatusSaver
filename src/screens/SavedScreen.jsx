@@ -34,7 +34,7 @@ const SavedScreen = ({navigation}) => {
     setSLoading,
   } = useContext(AppContext);
   // const [sLoading, setSLoading] = useState(false);
-  // const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  // const [filter, setFilter] = useState(savedFilter); // opts : 'IMAGES','VIDEOS','ALL' .etc
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -73,69 +73,32 @@ const SavedScreen = ({navigation}) => {
       backAction,
     );
 
-    const unsubscribe = navigation.addListener('focus', () => {
-      getSavedStatuses();
-      console.log('focus');
-    });
+    // const unsubscribe = navigation.addListener('focus', () => {
+    //   getSavedStatuses();
+    //   console.log('focus');
+    // });
 
     // Cleanup the event listener when the component is unmounted
     return () => {
-      unsubscribe;
+      // unsubscribe;
       backHandler.remove();
     };
-  }, [savedFilter,navigation]);
+  }, [savedFilter, navigation]);
 
-  const onlyVideos = /\.(mp4)$/i;
-  const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
-  const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
-
-  // const getSavedStatuses = async () => {
-  //   try {
-  //     console.log('getSavedStatuses called !');
-  //     setSLoading(true);
-  //     // const appV = Platform.Version;
-  //     // if (appV >= 29) {
-  //     //   setIsExtPermissionGranted(true);
-  //     const isPathExist = await RNFS.exists(WhatsAppStatusDirectory);
-  //     // console.log({isPathExist});
-  //     if (!isPathExist) {
-  //       await RNFS.mkdir(WhatsAppStatusDirectory);
-  //     }
-  //     const files = await RNFS.readDir(WhatsAppStatusDirectory);
-  //     // console.log({files});
-  //     if (savedFilter === 'Images') {
-  //       const filterFiles = files.savedFilter(file => onlyImages.test(file.name));
-  //       console.log({filterFiles});
-  //       setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
-  //       if (filterFiles.length === 0) {
-  //         ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-  //       }
-  //     } else if (savedFilter === 'Videos') {
-  //       const filterFiles = files.savedFilter(file => onlyVideos.test(file.name));
-  //       setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
-  //       if (filterFiles.length === 0) {
-  //         ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-  //       }
-  //     } else {
-  //       const filterFiles = files.savedFilter(file => AllMedia.test(file.name));
-  //       setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
-  //       if (filterFiles.length === 0) {
-  //         ToastAndroid.show('Status not found', ToastAndroid.SHORT);
-  //       }
-
-  //       console.log({filterFiles});
-  //     }
-  //     setSLoading(false);
-  //   } catch (error) {
-  //     setSLoading(false);
-  //     console.log({getAllStatuses_error_saved: error});
-  //   }
-  // };
+  // const onlyVideos = /\.(mp4)$/i;
+  // const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
+  // const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
 
   const handleScrollToTop = () => {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({offset: 0, animated: true});
     }
+  };
+
+  // change filter
+  const handleFilter = filterOption => {
+    setSavedFilter(filterOption);
+    handleScrollToTop();
   };
 
   const currentTime = new Date();
@@ -185,14 +148,46 @@ const SavedScreen = ({navigation}) => {
           {sortedData.length} items in total
         </Text>
         {/* savedFilter btn */}
-        <FilterBtn
+        {/* <FilterBtn
           filterModalVisible={filterModalVisible}
           setFilterModalVisible={setFilterModalVisible}
           filter={savedFilter}
           setFilter={setSavedFilter}
           handleScrollToTop={handleScrollToTop}
           isSaved={true}
-        />
+        /> */}
+        <View style={{flexDirection: 'row'}}>
+          <TouchableOpacity
+            onPress={() => handleFilter('Images')}
+            style={[
+              styles.filterBtn,
+              savedFilter == 'Images' && styles.activeFilterText,
+            ]}>
+            <Text
+              style={[
+                styles.filterText,
+                {color: savedFilter == 'Images' ? '#fff' : '#000'},
+              ]}>
+              IMAGES
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleFilter('Videos')}
+            style={[
+              styles.filterBtn,
+              savedFilter == 'Videos' && styles.activeFilterText,
+            ]}>
+            <Text
+              style={[
+                styles.filterText,
+                {color: savedFilter == 'Videos' ? '#fff' : '#000'},
+              ]}>
+              VIDEOS
+            </Text>
+          </TouchableOpacity>
+
+          {/* <Text style={styles.filterText}>New</Text> */}
+        </View>
       </View>
 
       {/* {!isExtPermissionGranted && (
@@ -292,6 +287,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  filterBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginLeft: 10,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  filterText: {
+    color: '#000',
+    fontWeight: '600',
+  },
+  activeFilterText: {
+    backgroundColor: '#074e54',
+    borderColor: 'green',
   },
   prmBtn: {
     borderRadius: 10,

@@ -26,8 +26,6 @@ const StatusView = ({
   const {height, width} = Dimensions.get('window');
   const {getSavedStatuses} = useContext(AppContext);
 
-  const WhatsAppStatusDirectory = `/storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/`;
-
   const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
 
   // console.log({item});
@@ -60,7 +58,7 @@ const StatusView = ({
               );
               if (!isExist) {
                 ToastAndroid.show('Status not available', ToastAndroid.SHORT);
-                return
+                return;
               }
               await RNFS.unlink(WhatsAppSavedStatusDirectory + item.name)
                 .then(() => {
@@ -86,18 +84,18 @@ const StatusView = ({
     <TouchableOpacity
       activeOpacity={0.6}
       onPress={() => {
-        setStatuses(prevState => ({
-          ...prevState,
-          currentMedia: item.uri || item.path,
-          mediaName: item.name,
-        }));
-        setIsCrntStatusVisible(true);
+        // setStatuses(prevState => ({
+        //   ...prevState,
+        //   currentMedia: item.uri || item.path,
+        //   mediaName: item.name,
+        // }));
         navigation.navigate('SelectedStatusScreen', {
           uri: status.filePath,
           statusName: status.fileName,
           mime: item.mime,
           // getStatuses:getStatuses
         });
+        // setIsCrntStatusVisible(true);
       }}
       onLongPress={async () => {
         deleteStatus();
@@ -143,7 +141,7 @@ export default StatusView;
 const styles = StyleSheet.create({
   outerView: {
     // flex:0.5,
-    alignSelf:'flex-start',
+    alignSelf: 'flex-start',
     borderColor: 'grey',
     borderWidth: 0.5,
     borderRadius: 10,

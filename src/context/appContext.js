@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {createContext, useState} from 'react';
+import React, {createContext, useCallback, useState} from 'react';
 import {
   NativeModules,
   ToastAndroid,
@@ -11,7 +11,11 @@ import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFS from 'react-native-fs';
 import {RNLauncherKitHelper} from 'react-native-launcher-kit';
-import {useNavigation} from '@react-navigation/native';
+import {
+  getFocusedRouteNameFromRoute,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 
 // Create the user context
 export const AppContext = createContext();
@@ -22,8 +26,8 @@ export const AppProvider = ({children}) => {
   const [isAccessGranted, setIsAccessGranted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sLoading, setSLoading] = useState(false);
-  const [filter, setFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
-  const [savedFilter, setSavedFilter] = useState('All Statuses'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  const [filter, setFilter] = useState('Videos'); // opts : 'IMAGES','VIDEOS','ALL' .etc
+  const [savedFilter, setSavedFilter] = useState('Videos'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [appVersion, setAppVersion] = useState(null);
   const [appOpt, setAppOpt] = useState({type: 'whatsapp', isSelected: false});
   const [accessLoading, setAccessLoading] = useState(false);
@@ -49,6 +53,13 @@ export const AppProvider = ({children}) => {
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
   const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
+
+  // useCallback(() => {
+  //   const route = useRoute();
+  //   const routeName = getFocusedRouteNameFromRoute(route);
+  //   console.log({routeName});
+  // }, []);
+
   // request scoped storage permission
   const requestScopedPermissionAccess = async () => {
     try {
@@ -75,7 +86,7 @@ export const AppProvider = ({children}) => {
         ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
         setAccessLoading(false);
         setShowDialogue(false);
-        await getStatuses();
+        // await getStatuses();
       } else {
         // user selected wrong folder
         ToastAndroid.show(
@@ -309,7 +320,7 @@ export const AppProvider = ({children}) => {
         await RNFS.mkdir(WhatsAppSavedStatusDirectory);
       }
       const files = await RNFS.readDir(WhatsAppSavedStatusDirectory);
-      console.log({files});
+      // console.log({files});
       if (savedFilter === 'Images') {
         const filterFiles = files.filter(file => onlyImages.test(file.name));
         console.log({images: filterFiles});

@@ -49,7 +49,7 @@ const RecentScreen = ({navigation}) => {
     filter,
     setFilter,
     isLatestVersion,
-    isExtPermissionGranted
+    isExtPermissionGranted,
   } = useContext(AppContext);
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
@@ -59,14 +59,14 @@ const RecentScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    if (isLatestVersion) {
-      getAccess();
+    // if (isLatestVersion) {
+      // getAccess();
       getStatuses();
-    }else{
+    // } else {
       // isExtPermissionGranted && (
       //   // const statu
       // )
-    }
+    // }
 
     const backAction = () => {
       if (navigation.canGoBack()) {
@@ -91,11 +91,6 @@ const RecentScreen = ({navigation}) => {
       backAction,
     );
 
-    // const onScreenFocus = navigation.addListener('focus', () => {
-    //   getStatuses();
-    //   console.log('focus');
-    // });
-
     // Cleanup the event listener when the component is unmounted
     return () => {
       // onScreenFocus()
@@ -107,6 +102,12 @@ const RecentScreen = ({navigation}) => {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({offset: 0, animated: true});
     }
+  };
+
+  // change filter
+  const handleFilter = filterOption => {
+    setFilter(filterOption);
+    handleScrollToTop();
   };
 
   // const currentTime = new Date();
@@ -204,14 +205,46 @@ const RecentScreen = ({navigation}) => {
           {sortedData.length} items in total
         </Text>
         {/* filter btn */}
-        <FilterBtn
+        {/* <FilterBtn
           filterModalVisible={filterModalVisible}
           setFilterModalVisible={setFilterModalVisible}
           filter={filter}
           setFilter={setFilter}
           handleScrollToTop={handleScrollToTop}
           isSaved={false}
-        />
+        /> */}
+        <View style={{flexDirection: 'row'}}>
+          <TouchableOpacity
+            onPress={() => handleFilter('Images')}
+            style={[
+              styles.filterBtn,
+              filter == 'Images' && styles.activeFilterText,
+            ]}>
+            <Text
+              style={[
+                styles.filterText,
+                {color: filter == 'Images' ? '#fff' : '#000'},
+              ]}>
+              IMAGES
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleFilter('Videos')}
+            style={[
+              styles.filterBtn,
+              filter == 'Videos' && styles.activeFilterText,
+            ]}>
+            <Text
+               style={[
+                styles.filterText,
+                {color: filter == 'Videos' ? '#fff' : '#000'},
+              ]}>
+              VIDEOS
+            </Text>
+          </TouchableOpacity>
+
+          {/* <Text style={styles.filterText}>New</Text> */}
+        </View>
       </View>
 
       {loading && statuses.allStatuses.length === 0 && (
@@ -236,7 +269,7 @@ const RecentScreen = ({navigation}) => {
         <FlatList
           refreshing={loading}
           bounces={true}
-          columnWrapperStyle={{flex:1,justifyContent: 'flex-start'}}
+          columnWrapperStyle={{flex: 1, justifyContent: 'flex-start'}}
           onRefresh={() => getStatuses()}
           ref={flatListRef}
           showsVerticalScrollIndicator={true}
@@ -286,6 +319,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#00000040',
     backfaceVisibility: 'visible',
+  },
+  filterBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginLeft: 10,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  filterText: {
+    color: '#000',
+    fontWeight: '600',
+  },
+  activeFilterText: {
+    backgroundColor: '#074e54',
+    borderColor:'green'
   },
   modalView: {
     margin: 20,

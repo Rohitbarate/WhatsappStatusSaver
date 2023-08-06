@@ -69,6 +69,18 @@ export const AppProvider = ({children}) => {
         appOpt.type,
       );
       console.log({mainRes: res});
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        {
+          title: 'Wi status saver needs storage Permission',
+          message:
+            'Wi status saver needs access to your storage ' +
+            'so you can download the statuses',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
       if (
         !res.success &&
         res.msg === 'The selected app is not installed on the device.'
@@ -86,7 +98,7 @@ export const AppProvider = ({children}) => {
         ToastAndroid.show('Access Granted 🎉🎉', ToastAndroid.LONG);
         setAccessLoading(false);
         setShowDialogue(false);
-        // await getStatuses();
+        await getStatuses();
       } else {
         // user selected wrong folder
         ToastAndroid.show(
@@ -132,7 +144,6 @@ export const AppProvider = ({children}) => {
     console.log({persistedUris});
     console.log({
       folderAccess,
-      folderUrl: folderAccess.folderUrl,
       isLatestVersion,
     });
     try {
@@ -142,7 +153,7 @@ export const AppProvider = ({children}) => {
         folderAccess.folderUrl.length !== 0 &&
         appV >= 29
       ) {
-        setLoading(true);
+        // setLoading(true);
         console.log('fetch status');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
         files = await ScopedStoragePackage.listFiles(
@@ -160,7 +171,7 @@ export const AppProvider = ({children}) => {
         setLoading(false);
         setIsAccessGranted(false);
       }
-      console.log({rcFiles: files});
+      // console.log({rcFiles: files});
       if (filter === 'Images') {
         const filterFiles = files.filter(file => onlyImages.test(file.name));
         // console.log({filterFiles});
@@ -183,8 +194,9 @@ export const AppProvider = ({children}) => {
 
   //  check scoped storage permission
   const getAccess = async () => {
+    console.log("getAccess() called");
     try {
-      setAccessLoading(true);
+      setAccessLoading(true); 
       //  await AsyncStorage.clear()
       // get folder link stored in asyncStorage
 
@@ -268,10 +280,10 @@ export const AppProvider = ({children}) => {
       const read_storage = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         {
-          title: 'Cool Photo App Camera Permission',
+          title: 'Wi status saver needs storage Permission',
           message:
-            'Cool Photo App needs access to your camera ' +
-            'so you can take awesome pictures.',
+            'Wi status saver needs access to your storage ' +
+            'so you can download the statuses',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',

@@ -28,7 +28,7 @@ const {ScopedStorage} = NativeModules;
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FilterBtn from '../components/FilterBtn';
-import {AppContext} from '../context/appContext';
+import {AppContext, setShowAppTypeDilogue} from '../context/appContext';
 
 const RecentScreen = ({navigation}) => {
   const {
@@ -50,6 +50,7 @@ const RecentScreen = ({navigation}) => {
     setFilter,
     isLatestVersion,
     isExtPermissionGranted,
+    showAppTypeDilogue,
   } = useContext(AppContext);
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
@@ -60,12 +61,12 @@ const RecentScreen = ({navigation}) => {
 
   useEffect(() => {
     // if (isLatestVersion) {
-      // getAccess();
-      getStatuses();
+    getAccess();
+    // getStatuses();
     // } else {
-      // isExtPermissionGranted && (
-      //   // const statu
-      // )
+    // isExtPermissionGranted && (
+    //   // const statu
+    // )
     // }
 
     const backAction = () => {
@@ -166,7 +167,7 @@ const RecentScreen = ({navigation}) => {
 
       {/* Access dilogue component */}
 
-      {showDilogue && !accessLoading && (
+      {showDilogue && !accessLoading && !showAppTypeDilogue && (
         <View style={{flex: 1, position: 'absolute'}}>
           <Modal animationType="slide" transparent={true}>
             <View style={styles.centeredView}>
@@ -235,7 +236,7 @@ const RecentScreen = ({navigation}) => {
               filter == 'Videos' && styles.activeFilterText,
             ]}>
             <Text
-               style={[
+              style={[
                 styles.filterText,
                 {color: filter == 'Videos' ? '#fff' : '#000'},
               ]}>
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
   },
   activeFilterText: {
     backgroundColor: '#074e54',
-    borderColor:'green'
+    borderColor: 'green',
   },
   modalView: {
     margin: 20,

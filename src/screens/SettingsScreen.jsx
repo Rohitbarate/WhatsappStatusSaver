@@ -63,6 +63,7 @@ const SettingsScreen = ({navigation}) => {
   };
 
   const setAppOptHandler = async filterOption => {
+    setFilterLoading(true);
     // console.log({appOpt: appOpt.type, filterOption_type: filterOption});
    try {
     const result = await changeAppOptHandler(filterOption);

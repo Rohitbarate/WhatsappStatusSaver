@@ -12,9 +12,10 @@ import Icon3 from 'react-native-vector-icons/AntDesign';
 import HomeScreen from '../screens/HomeScreen';
 import PolicyScreen from '../screens/PolicyScreen';
 import AboutScreen from '../screens/AboutScreen';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 const RootNavigator = () => {
-  // const Tab = createMaterialTopTabNavigator()
+  // const Drawer = createMaterialTopTabNavigator()
   const Drawer = createDrawerNavigator();
 
   return (

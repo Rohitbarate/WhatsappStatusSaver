@@ -66,6 +66,7 @@ const App = () => {
         setIsLatestVersion(false);
         await requestExtPermissions();
       } else {
+        console.log("handlePermission called");
         setIsLatestVersion(true);
         await getAccess();
         // if (!r) {
@@ -130,9 +131,12 @@ const App = () => {
       await AsyncStorage.removeItem('folderAccess');
       const persistedUris =
         await ScopedStoragePackage.getPersistedUriPermissions();
-      await ScopedStoragePackage.releasePersistableUriPermission(
-        persistedUris[0],
-      );
+      console.log({persistedUris});
+      if (persistedUris.length >= 1) {
+        await ScopedStoragePackage.releasePersistableUriPermission(
+          persistedUris[0],
+        );
+      }
       storeWT({isSelected: true, type: tempAppType});
       // navigation.jumpTo('Whatsapp');
       setStatuses({

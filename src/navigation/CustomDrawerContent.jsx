@@ -76,7 +76,7 @@ const CustomDrawerContent = props => {
         }}
       />
       <DrawerItemList {...props} />
-      <View
+      {/* <View
         style={{
           height: 1,
           width: '100%',
@@ -113,7 +113,7 @@ const CustomDrawerContent = props => {
             name={'star-outline'}
           />
         )}
-      />
+      /> */}
       <View
         style={{
           height: 1,

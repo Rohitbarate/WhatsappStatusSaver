@@ -8,6 +8,7 @@ import {
   PermissionsAndroid,
   ToastAndroid,
   Platform,
+  Image,
   StyleSheet,
   Modal,
   Dimensions,
@@ -172,6 +173,15 @@ const RecentScreen = ({navigation}) => {
           <Modal animationType="slide" transparent={true}>
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
+                <Image
+                  source={require('../assets/permission_img.jpg')}
+                  style={{
+                    height: undefined,
+                    width: 250,
+                    aspectRatio: 3 / 4,
+                    borderRadius: 10,
+                  }}
+                />
                 <Text
                   style={{
                     color: '#000',
@@ -179,6 +189,7 @@ const RecentScreen = ({navigation}) => {
                     fontWeight: 500,
                     textAlign: 'center',
                     textTransform: 'capitalize',
+                    marginTop: 10,
                   }}>
                   App Needs Storage Permission to download your whatsapp
                   statuses
@@ -318,7 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00000040',
+    backgroundColor: '#00000090',
     backfaceVisibility: 'visible',
   },
   filterBtn: {
@@ -358,9 +369,9 @@ const styles = StyleSheet.create({
   prmBtn: {
     borderRadius: 10,
     backgroundColor: 'green',
-    paddingVertical: 5,
+    paddingVertical: 10,
     paddingHorizontal: 10,
-    marginTop: 10,
+    marginTop: 20,
   },
   prmBtnText: {
     fontWeight: '800',

@@ -31,7 +31,7 @@ const HomeScreen = ({navigation}) => {
         },
         tabBarShowIcon: true,
         tabBarIndicatorStyle: {backgroundColor: '#25D366'},
-        swipeEnabled:scrollEnabled,
+        swipeEnabled:getTabBarVisibility(route),
       })}
       initialRouteName="Recent"
       backBehavior="initialRoute">

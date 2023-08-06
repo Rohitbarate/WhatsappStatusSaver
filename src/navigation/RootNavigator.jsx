@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import React from 'react';
 // import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import {createDrawerNavigator} from '@react-navigation/drawer';
@@ -12,22 +12,34 @@ import Icon3 from 'react-native-vector-icons/AntDesign';
 import HomeScreen from '../screens/HomeScreen';
 import PolicyScreen from '../screens/PolicyScreen';
 import AboutScreen from '../screens/AboutScreen';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
+import LinearGradient from 'react-native-linear-gradient';
+// import { Header } from 'react-navigation' ;
 
 const RootNavigator = () => {
   // const Drawer = createMaterialTopTabNavigator()
   const Drawer = createDrawerNavigator();
 
+  const GradientHeader = props => (
+    <View style={{backgroundColor: '#eee'}}>
+      <LinearGradient
+        colors={['red', 'blue']}
+        style={[StyleSheet.absoluteFill, {height: Header.HEIGHT}]}>
+        <Header {...props} />
+      </LinearGradient>
+    </View>
+  );
+
   return (
     <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
-      initialRouteName='Whatsapp'
+      initialRouteName="Whatsapp"
       screenOptions={{
         drawerPosition: 'left',
         drawerType: 'slide',
         drawerActiveBackgroundColor: '#0d5a61',
         drawerActiveTintColor: '#25f795',
-        headerShadowVisible:false,
+        headerShadowVisible: false,
         headerStyle: {
           // height: 50,
           backgroundColor: '#074e54',
@@ -39,9 +51,7 @@ const RootNavigator = () => {
           fontStyle: 'italic',
         },
         headerTintColor: '#fff',
-        
       }}>
-        
       <Drawer.Screen
         name="Whatsapp"
         component={HomeScreen}
@@ -64,7 +74,7 @@ const RootNavigator = () => {
           //   // height: 50,
           // },
           headerTitle: 'Whatsapp status saver',
-         
+
           title: 'Whatsapp',
           lazy: false,
         }}
@@ -86,9 +96,15 @@ const RootNavigator = () => {
             />
           ),
           headerStyle: {
-            backgroundColor: '#ff8800',
-            shadowColor: '#ff8800',
+            backgroundColor: '#fa7e1e',
+            shadowColor: '#d62976',
           },
+          // headerBackground: () => {
+          //   <LinearGradient
+          //     colors={['#4c669f', '#3b5998', '#192f6a']}
+          //     // style={styles.linearGradient}
+          //   />;
+          // },
         }}
       />
       <Drawer.Screen
@@ -114,7 +130,7 @@ const RootNavigator = () => {
         component={PolicyScreen}
         options={{
           title: 'privacyPolicy',
-          headerTitle:'Privacy & Policy',
+          headerTitle: 'Privacy & Policy',
           drawerIcon: ({color, size, focused}) => (
             <Icon2
               style={{
@@ -152,3 +168,12 @@ const RootNavigator = () => {
 };
 
 export default RootNavigator;
+
+const styles = StyleSheet.create({
+  linearGradient: {
+    flex: 1,
+    paddingLeft: 15,
+    paddingRight: 15,
+    borderRadius: 5,
+  },
+});

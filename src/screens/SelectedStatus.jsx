@@ -12,6 +12,7 @@ import {
   Alert,
   NativeModules,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useRef, useState, useContext} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -24,6 +25,7 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import Pinchable from 'react-native-pinchable';
 import {AppContext} from '../context/appContext';
 import {useIsFocused, useRoute} from '@react-navigation/native';
+import PushNotification from 'react-native-push-notification';
 
 const SelectedStatus = ({route, navigation}) => {
   const {uri, statusName, mime} = route.params;
@@ -33,6 +35,9 @@ const SelectedStatus = ({route, navigation}) => {
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [statusType, setStatusType] = useState(null);
+  const [dActionLoading, setDActionLoading] = useState(false);
+  const [sActionLoading, setSActionLoading] = useState(false);
+  const [swActionLoading, setSWActionLoading] = useState(false);
   // const [newStatusName, setNewStatusName] = useState(statusName);
   const {getSavedStatuses, setScrollEnabled} = useContext(AppContext);
   const {ContentUriToAbsolutePathModule} = NativeModules;
@@ -106,6 +111,7 @@ const SelectedStatus = ({route, navigation}) => {
 
   const handleShareToWhatsapp = async url => {
     try {
+      setSWActionLoading(true);
       let absolutePath = url;
       if (url.includes('content://')) {
         absolutePath = await ContentUriToAbsolutePathModule.resolveUriPath(url);
@@ -117,19 +123,23 @@ const SelectedStatus = ({route, navigation}) => {
         social: Share.Social.WHATSAPP,
       })
         .then(res => {
+          setSWActionLoading(false);
           console.log(res);
         })
         .catch(err => {
+          setSWActionLoading(false);
           err && console.log(err);
         });
 
       //
     } catch (error) {
+      setSWActionLoading(false);
       console.error('Error sharing to WhatsApp:', error.message);
     }
   };
 
   const handleShare = async url => {
+    setSActionLoading(true);
     let absolutePath = url;
     if (url.includes('content://')) {
       absolutePath = await ContentUriToAbsolutePathModule.resolveUriPath(url);
@@ -140,14 +150,17 @@ const SelectedStatus = ({route, navigation}) => {
       url: absolutePath,
     })
       .then(res => {
+        setSActionLoading(false);
         console.log(res);
       })
       .catch(err => {
+        setSActionLoading(false);
         err && console.log(err);
       });
   };
 
   const downloadStatusHandler = async () => {
+    setDActionLoading(true);
     const persistedUris =
       await ScopedStoragePackage.getPersistedUriPermissions();
 
@@ -176,6 +189,7 @@ const SelectedStatus = ({route, navigation}) => {
         createDestFile(sourceUrl, destUrl);
       }
     } catch (error) {
+      setDActionLoading(false);
       console.log({errorToDownload: error});
       ToastAndroid.show(error, ToastAndroid.SHORT);
     }
@@ -195,37 +209,51 @@ const SelectedStatus = ({route, navigation}) => {
         ToastAndroid.show('Download failed, try again', ToastAndroid.SHORT);
       }
     } catch (error) {
+      setDActionLoading(false);
       console.log({error});
     }
   };
 
   const copyFileFunction = async (sourceUrl, destUrl) => {
-    const fileStat = await ScopedStoragePackage.stat(sourceUrl);
-    console.log({fileStat});
-    await ScopedStoragePackage.copyFile(fileStat.uri, destUrl, res => {
-      console.log({res});
-      if (!res.success) {
-        ToastAndroid.show(res.message, ToastAndroid.SHORT);
-        RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
-          .then(() => {
-            // console.log('FILE DELETED');
-            // ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
-            // navigation.goBack();
-          })
-          .catch(err => {
-            console.log(err.message);
-            ToastAndroid.show(err.message, ToastAndroid.SHORT);
-          });
-        return;
-      }
-      ToastAndroid.show(
-        res.message + 'at /storage/emulated/0/DCIM/wi_status_saver/',
-        ToastAndroid.LONG,
-      );
-      NativeModules.MediaScannerModule.scanFile(destUrl);
-      checkIsSaved();
-      getSavedStatuses();
-    });
+    try {
+      const fileStat = await ScopedStoragePackage.stat(sourceUrl);
+      console.log({fileStat});
+      await ScopedStoragePackage.copyFile(fileStat.uri, destUrl, res => {
+        console.log({res});
+        if (!res.success) {
+          setDActionLoading(false);
+          ToastAndroid.show(res.message, ToastAndroid.SHORT);
+          RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
+            .then(() => {
+              // console.log('FILE DELETED');
+              // ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
+              // navigation.goBack();
+            })
+            .catch(err => {
+              setDActionLoading(false);
+              console.log(err.message);
+              ToastAndroid.show(err.message, ToastAndroid.SHORT);
+            });
+          return;
+        }
+        // ToastAndroid.show(
+        //   res.message + 'at /storage/emulated/0/DCIM/wi_status_saver/',
+        //   ToastAndroid.LONG,
+        // );
+        PushNotification.localNotification({
+          channelId: 'wiStatusSaver.rohitbarate',
+          title: statusName,
+          message: 'status saved to DCIM/wi_status_saver/',
+        });
+        NativeModules.MediaScannerModule.scanFile(destUrl);
+        checkIsSaved();
+        setDActionLoading(false);
+        getSavedStatuses();
+      });
+    } catch (error) {
+      setDActionLoading(false);
+      console.log({error});
+    }
   };
 
   const onVideoPlaying = props => {
@@ -233,7 +261,7 @@ const SelectedStatus = ({route, navigation}) => {
   };
 
   const onReadyForDisplay = prop => {
-    console.log("onReadyForDisplay");
+    console.log('onReadyForDisplay');
     setIsVideoEnded(false);
     setShowControls(true);
     hideControls();
@@ -258,12 +286,16 @@ const SelectedStatus = ({route, navigation}) => {
   };
 
   const deleteStatusHandler = async () => {
+    setDActionLoading(true);
     Alert.alert(
       '',
       'Delete status?',
       [
         {
           text: 'cancel',
+          onPress: () => {
+            setDActionLoading(false);
+          },
         },
         {
           text: 'delete',
@@ -275,22 +307,30 @@ const SelectedStatus = ({route, navigation}) => {
               ToastAndroid.show('Status not available', ToastAndroid.SHORT);
               navigation.goBack();
               console.log({unlink: WhatsAppSavedStatusDirectory + statusName});
+              setDActionLoading(false);
               return;
             }
 
             await RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
               .then(() => {
                 console.log('FILE DELETED');
-                ToastAndroid.show('Status Deleted', ToastAndroid.SHORT);
+                // ToastAndroid.show('Status Deleted', ToastAndroid.SHORT);
                 checkIsSaved();
+                setDActionLoading(false);
                 if (
                   uri.indexOf('content://com.android.externalstorage') === -1
                 ) {
                   navigation.goBack();
                   getSavedStatuses();
                 }
+                PushNotification.localNotification({
+                  channelId: 'wiStatusSaver.rohitbarate',
+                  title: statusName,
+                  message: 'status deleted successfully.',
+                });
               })
               .catch(err => {
+                setDActionLoading(false);
                 console.log(err.message);
                 ToastAndroid.show(err.message, ToastAndroid.SHORT);
               });
@@ -448,14 +488,20 @@ const SelectedStatus = ({route, navigation}) => {
 
       <View style={styles.btnView}>
         <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => handleShare(uri)}
           style={[
             styles.button,
             {height: 50, width: 50, borderRadius: 50, marginHorizontal: 10},
           ]}>
-          <Icon name="ios-share-social-outline" size={30} color={'#fff'} />
+          {sActionLoading ? (
+            <ActivityIndicator color={'#fff'} size={30} />
+          ) : (
+            <Icon name="ios-share-social-outline" size={30} color={'#fff'} />
+          )}
         </TouchableOpacity>
         <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => {
             isSaved ? deleteStatusHandler() : downloadStatusHandler();
           }}
@@ -463,19 +509,28 @@ const SelectedStatus = ({route, navigation}) => {
             styles.button,
             {height: 65, width: 65, borderRadius: 65, marginHorizontal: 10},
           ]}>
-          <Icon
-            name={isSaved ? 'trash-outline' : 'ios-arrow-down'}
-            size={40}
-            color={'#fff'}
-          />
+          {dActionLoading ? (
+            <ActivityIndicator color={'#fff'} size={30} />
+          ) : (
+            <Icon
+              name={isSaved ? 'trash-outline' : 'ios-arrow-down'}
+              size={40}
+              color={'#fff'}
+            />
+          )}
         </TouchableOpacity>
         <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => handleShareToWhatsapp(uri)}
           style={[
             styles.button,
             {height: 50, width: 50, borderRadius: 50, marginHorizontal: 10},
           ]}>
-          <Icon name="logo-whatsapp" size={30} color={'#fff'} />
+          {swActionLoading ? (
+            <ActivityIndicator color={'#fff'} size={30} />
+          ) : (
+            <Icon name="logo-whatsapp" size={30} color={'#fff'} />
+          )}
         </TouchableOpacity>
       </View>
     </View>

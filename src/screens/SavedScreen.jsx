@@ -19,6 +19,7 @@ import StatusView from '../components/StatusView';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FilterBtn from '../components/FilterBtn';
 import {AppContext} from '../context/appContext';
+import Icon from 'react-native-vector-icons/Feather';
 
 const SavedScreen = ({navigation}) => {
   const {
@@ -40,6 +41,7 @@ const SavedScreen = ({navigation}) => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const {height, width} = Dimensions.get('window');
   const [fileNames, setFileNames] = useState([]);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   // const [savedStatuses, setSavedStatuses] = useState({
   //   allStatuses: [],
   //   currentMedia: '',
@@ -88,6 +90,11 @@ const SavedScreen = ({navigation}) => {
   // const onlyVideos = /\.(mp4)$/i;
   // const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
   // const AllMedia = /\.(jpg|jpeg|png|gif|mp4|mov)$/i;
+
+  const handleScroll = event => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollButton(offsetY > 0);
+  };
 
   const handleScrollToTop = () => {
     if (flatListRef.current) {
@@ -220,6 +227,7 @@ const SavedScreen = ({navigation}) => {
           columnWrapperStyle={{flex: 1, justifyContent: 'flex-start'}}
           refreshing={sLoading}
           bounces={true}
+          onScroll={handleScroll}
           onRefresh={() => getSavedStatuses()}
           ref={flatListRef}
           showsVerticalScrollIndicator={true}
@@ -256,6 +264,13 @@ const SavedScreen = ({navigation}) => {
             </TouchableOpacity>
           </View>
         )
+      )}
+       {showScrollButton && (
+        <TouchableOpacity
+          onPress={handleScrollToTop}
+          style={styles.scrollButton}>
+          <Icon name="arrow-up" size={30} color={'#fff'} />
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -316,5 +331,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 18,
     color: '#fff',
+  },
+  scrollButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'green',
+    padding: 10,
+    borderRadius: 5,
   },
 });

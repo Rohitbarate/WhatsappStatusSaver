@@ -29,6 +29,7 @@ const {ScopedStorage} = NativeModules;
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FilterBtn from '../components/FilterBtn';
+import Icon from 'react-native-vector-icons/Feather';
 import {AppContext, setShowAppTypeDilogue} from '../context/appContext';
 
 const RecentScreen = ({navigation}) => {
@@ -57,6 +58,7 @@ const RecentScreen = ({navigation}) => {
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const {height, width} = Dimensions.get('window');
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const flatListRef = useRef(null);
 
@@ -99,6 +101,11 @@ const RecentScreen = ({navigation}) => {
       backHandler.remove();
     };
   }, [filter]);
+
+  const handleScroll = event => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollButton(offsetY > 0);
+  };
 
   const handleScrollToTop = () => {
     if (flatListRef.current) {
@@ -287,6 +294,7 @@ const RecentScreen = ({navigation}) => {
           showsVerticalScrollIndicator={true}
           scrollIndicatorInsets={{right: 2}}
           numColumns={2}
+          onScroll={handleScroll}
           data={sortedData}
           keyExtractor={item => item.name}
           renderItem={({item}) => (
@@ -317,6 +325,14 @@ const RecentScreen = ({navigation}) => {
             </TouchableOpacity>
           </View>
         )
+      )}
+
+      {showScrollButton && (
+        <TouchableOpacity
+          onPress={handleScrollToTop}
+          style={styles.scrollButton}>
+          <Icon name="arrow-up" size={30} color={'#fff'} />
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -377,5 +393,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 18,
     color: '#fff',
+  },
+  scrollButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'green',
+    padding: 10,
+    borderRadius: 5,
   },
 });

@@ -14,7 +14,7 @@ PushNotification.configure({
   },
   onNotification: function (notification) {
     console.log('NOTIFICATION:', notification);
-    notification.finish(PushNotification.FetchResult.NoData);
+    // notification.finish(PushNotification.FetchResult.NoData);
   },
 
   popInitialNotification: true,

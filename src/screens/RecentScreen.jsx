@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   scrollButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 50,
     right: 20,
     backgroundColor: 'green',
     padding: 10,

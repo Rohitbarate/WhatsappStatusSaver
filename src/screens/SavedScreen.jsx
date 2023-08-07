@@ -212,7 +212,7 @@ const SavedScreen = ({navigation}) => {
                 App Needs Storage Permission to load your whatsapp savedStatuses
               </Text>
               <TouchableOpacity
-                onPress={requestPermissions}
+                onPress={requestExtPermissions}
                 style={styles.prmBtn}>
                 <Text style={styles.prmBtnText}>Grant Permission</Text>
               </TouchableOpacity>
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   },
   scrollButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 50,
     right: 20,
     backgroundColor: 'green',
     padding: 10,

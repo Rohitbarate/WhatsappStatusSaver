@@ -25,6 +25,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import RootNavigator from './src/navigation/RootNavigator';
 import SplashScreen from 'react-native-splash-screen';
+import {
+  AppOpenAd,
+  TestIds,
+  AdEventType,
+  BannerAd,
+  BannerAdSize,
+} from 'react-native-google-mobile-ads';
 import {AppContext} from './src/context/appContext';
 import Icon from 'react-native-vector-icons/AntDesign';
 import {RNLauncherKitHelper} from 'react-native-launcher-kit';
@@ -52,12 +59,32 @@ const App = () => {
   const [tempAppType, setTempAppType] = useState(appOpt.type);
   const [loading, setLoading] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
+  const [showBannerAd, setShowBannerAd] = useState(false);
+
+  const appOpenAdId = __DEV__
+    ? TestIds.APP_OPEN
+    : 'ca-app-pub-9923230267052642/3218301764';
+
+  const bannerAdId = __DEV__
+    ? TestIds.BANNER
+    : 'ca-app-pub-9923230267052642/1145057793';
+
+  const appOpenAd = AppOpenAd.createForAdRequest(appOpenAdId, {
+    requestNonPersonalizedAdsOnly: true,
+    // keywords: ['fashion', 'clothing'],
+  });
 
   useEffect(() => {
     SplashScreen.hide();
-
+    appOpenAd.load();
     const appV = Platform.Version;
     // const appV = 28
+
+    appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+      appOpenAd.show();
+      setShowBannerAd(true);
+    });
+
     // check app version
     console.log({appV});
     const handlePermission = async () => {
@@ -66,7 +93,7 @@ const App = () => {
         setIsLatestVersion(false);
         await requestExtPermissions();
       } else {
-        console.log("handlePermission called");
+        console.log('handlePermission called');
         setIsLatestVersion(true);
         await getAccess();
         // if (!r) {
@@ -92,34 +119,6 @@ const App = () => {
 
     checkWT();
   }, []);
-
-  // const storeWT = async value => {
-  //   try {
-  //     // value :{hasAccess:boolean,folderUrl:String}
-  //     const jsonValue = JSON.stringify(value);
-  //     await AsyncStorage.setItem('whatsappOpt', jsonValue);
-  //     return;
-  //   } catch (e) {
-  //     console.log('error while storing Whatsapp Options : ', e);
-  //   }
-  // };
-
-  // const getWT = async () => {
-  //   try {
-  //     const jsonValue = await AsyncStorage.getItem('whatsappOpt');
-  //     return jsonValue != null ? JSON.parse(jsonValue) : null;
-  //   } catch (e) {
-  //     console.log('error while getting Whatsapp Options : ', e);
-  //   }
-  // };
-
-  // const setAppOptHandler = () => {
-  //   console.log({appOpt});
-  //   storeWT(appOpt);
-  //   setShowAppTypeDilogue(false);
-  //   setLoading(false);
-  //   getAccess();
-  // };
 
   const setAppOptHandler = async () => {
     setFilterLoading(true);
@@ -295,6 +294,7 @@ const App = () => {
           </View>
         </View>
       )}
+
       {loading && (
         <View
           style={{
@@ -365,6 +365,17 @@ const App = () => {
         />
       </Tab.Navigator> */}
       <RootNavigator />
+      {showBannerAd && (
+        <View style={{backgroundColor:'#fff'}}>
+          <BannerAd
+            unitId={bannerAdId}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: true,
+            }}
+          />
+        </View>
+      )}
     </NavigationContainer>
   );
 };

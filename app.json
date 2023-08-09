@@ -1,4 +1,7 @@
 {
   "name": "WIstatusSaver",
-  "displayName": "WI Status Saver"
+  "displayName": "WI Status Saver",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-9923230267052642~8690120290"
+  }
 }

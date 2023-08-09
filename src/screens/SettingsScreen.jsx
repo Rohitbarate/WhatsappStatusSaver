@@ -234,7 +234,7 @@ const SettingsScreen = ({navigation}) => {
                               appOpt.type === 'whatsapp' ? 'green' : '#000',
                           },
                         ]}>
-                        whatsapp
+                        Whatsapp
                       </Text>
                     </TouchableOpacity>
                     <View
@@ -252,7 +252,7 @@ const SettingsScreen = ({navigation}) => {
                   color={appOpt.type === 'whatsappB' ? 'green' : '#000'}
                 /> */}
                       <Image
-                        style={{height: 20, width: 20}}
+                        style={{height: 20, width: 20,}}
                         source={
                           appOpt.type === 'whatsappB'
                             ? require('../assets/whatsapp-business-green.png')
@@ -267,7 +267,7 @@ const SettingsScreen = ({navigation}) => {
                               appOpt.type === 'whatsappB' ? 'green' : '#000',
                           },
                         ]}>
-                        whatsapp business
+                        Whatsapp Business
                       </Text>
                     </TouchableOpacity>
                     <View

@@ -194,9 +194,9 @@ export const AppProvider = ({children}) => {
 
   //  check scoped storage permission
   const getAccess = async () => {
-    console.log("getAccess() called");
+    console.log('getAccess() called');
     try {
-      setAccessLoading(true); 
+      setAccessLoading(true);
       //  await AsyncStorage.clear()
       // get folder link stored in asyncStorage
 
@@ -343,13 +343,25 @@ export const AppProvider = ({children}) => {
       } else if (savedFilter === 'Videos') {
         const filterFiles = files.filter(file => onlyVideos.test(file.name));
         console.log({videos: filterFiles});
-        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        const trashedRemovedF = filterFiles.filter(file => {
+          return !file.name.includes('.trashed');
+        });
+        setSavedStatuses(preState => ({
+          ...preState,
+          allStatuses: trashedRemovedF,
+        }));
         if (filterFiles.length === 0) {
           ToastAndroid.show('Status not found', ToastAndroid.SHORT);
         }
       } else {
         const filterFiles = files.filter(file => AllMedia.test(file.name));
-        setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
+        const trashedRemovedF = filterFiles.filter(file => {
+          return file.name !== '.trashed';
+        });
+        setSavedStatuses(preState => ({
+          ...preState,
+          allStatuses: trashedRemovedF,
+        }));
         if (filterFiles.length === 0) {
           ToastAndroid.show('Status not found', ToastAndroid.SHORT);
         }

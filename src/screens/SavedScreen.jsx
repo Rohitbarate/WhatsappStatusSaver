@@ -125,6 +125,7 @@ const SavedScreen = ({navigation}) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         paddingHorizontal: 10,
+        paddingBottom:10
       }}>
       {sLoading && savedStatuses.allStatuses.length === 0 && (
         <View
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   },
   scrollButton: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 20,
     right: 20,
     backgroundColor: 'green',
     padding: 10,

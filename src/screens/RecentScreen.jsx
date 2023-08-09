@@ -32,7 +32,7 @@ import FilterBtn from '../components/FilterBtn';
 import Icon from 'react-native-vector-icons/Feather';
 import {AppContext, setShowAppTypeDilogue} from '../context/appContext';
 
-const RecentScreen = ({navigation}) => {
+const RecentScreen = ({navigation,}) => {
   const {
     requestScopedPermissionAccess,
     getData,
@@ -132,6 +132,7 @@ const RecentScreen = ({navigation}) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         // paddingHorizontal:10
+        paddingBottom:10
       }}>
       {/* file loading component */}
       {accessLoading && (
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   },
   scrollButton: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 20,
     right: 20,
     backgroundColor: 'green',
     padding: 10,

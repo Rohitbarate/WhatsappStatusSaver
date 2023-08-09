@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 const InstagramComp = () => {
 
   useEffect(() => {
-  Alert.alert("","Feature will coming soon , Stay tune")
+  // Alert.alert("","Feature will coming soon , Stay tune")
   }, [])
   
   return (

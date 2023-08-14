@@ -10,8 +10,10 @@ import {
   Platform,
   Animated,
   ActivityIndicator,
+  Linking,
+  AppState,
 } from 'react-native';
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState, useContext, useRef} from 'react';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
@@ -34,7 +36,7 @@ import {
 } from 'react-native-google-mobile-ads';
 import {AppContext} from './src/context/appContext';
 import Icon from 'react-native-vector-icons/AntDesign';
-import {RNLauncherKitHelper} from 'react-native-launcher-kit';
+import SendIntentAndroid from 'react-native-send-intent';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -55,11 +57,18 @@ const App = () => {
     getWT,
     storeWT,
     setStatuses,
+    appVersion,
+    setAppVersion,
+    showOpenAppSettings,
+    setShowOpenAppSettings,
+    checkExtPermissions,
   } = useContext(AppContext);
   const [tempAppType, setTempAppType] = useState(appOpt.type);
   const [loading, setLoading] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [showBannerAd, setShowBannerAd] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
   const appOpenAdId = __DEV__
     ? TestIds.APP_OPEN
@@ -75,32 +84,49 @@ const App = () => {
   });
 
   useEffect(() => {
-    SplashScreen.hide();
+    // SplashScreen.hide();
+    // setFilterLoading(true);
     appOpenAd.load();
     const appV = Platform.Version;
+
+    checkExtPermissions();
+    // const appV = 28; for test
+    setAppVersion(appV);
     // const appV = 28
 
     appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
-      appOpenAd.show();
+      // appOpenAd.show();
       setShowBannerAd(true);
     });
 
     // check app version
     console.log({appV});
+
     const handlePermission = async () => {
       //  app-V less than android 10
-      if (appV < 29) {
+      if (Platform.Version < 29) {
         setIsLatestVersion(false);
         await requestExtPermissions();
       } else {
-        console.log('handlePermission called');
+        // console.log('handlePermission called');
         setIsLatestVersion(true);
+        // await requestExtPermissions();
         await getAccess();
         // if (!r) {
         //   await requestScopedPermissionAccess();
         // }
       }
     };
+
+    const checkAppV = () => {
+      //  app-V less than android 10
+      if (Platform.Version < 29) {
+        setIsLatestVersion(false);
+      } else {
+        setIsLatestVersion(true);
+      }
+    };
+
     const checkWT = async () => {
       // await AsyncStorage.removeItem('whatsappOpt')
       setLoading(true);
@@ -108,25 +134,48 @@ const App = () => {
       console.log({whatsappOpt});
       if (whatsappOpt !== null) {
         setAppOpt(whatsappOpt);
-        handlePermission();
+        // handlePermission();
         setLoading(false);
+        SplashScreen.hide();
+        await getAccess();
         // setWhatsappOpt(whatsappOpt);
       } else {
+        // user is new app type is not set
         setLoading(false);
         setShowAppTypeDilogue(true);
+        SplashScreen.hide();
       }
+     
     };
 
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        console.log('App has come to the foreground!');
+        checkExtPermissions();
+        getAccess();
+      }
+      appState.current = nextAppState;
+      setAppStateVisible(appState.current);
+      console.log('AppState', appState.current);
+    });
+    checkAppV();
     checkWT();
+
+    return () => {
+      subscription.remove();
+    };
+    // setAppOptHandler()
   }, []);
 
   const setAppOptHandler = async () => {
     setFilterLoading(true);
     console.log({appOpt: appOpt.type, filterOption_type: tempAppType});
     const result = await changeAppOptHandler(tempAppType);
+    console.log({result});
     if (result) {
-      setFilterLoading(false);
-      console.log('going in if');
       await AsyncStorage.removeItem('folderAccess');
       const persistedUris =
         await ScopedStoragePackage.getPersistedUriPermissions();
@@ -136,6 +185,7 @@ const App = () => {
           persistedUris[0],
         );
       }
+      setFilterLoading(false);
       storeWT({isSelected: true, type: tempAppType});
       // navigation.jumpTo('Whatsapp');
       setStatuses({
@@ -146,18 +196,10 @@ const App = () => {
       setFilterLoading(false);
       setShowAppTypeDilogue(false);
       setLoading(false);
-      getAccess();
-    } else {
-      setFilterLoading(false);
+      await getAccess();
     }
+    setFilterLoading(false);
   };
-
-  // const changeAppOptHandler = async (apptype) => {
-  //   const result = await RNLauncherKitHelper.checkIfPackageInstalled(
-  //    apptype ==="whatsapp"? 'com.whatsapp':"com.whatsapp.w4b"
-  //   );
-  //   console.log({result});
-  // };
 
   return (
     <NavigationContainer>
@@ -177,6 +219,7 @@ const App = () => {
             right: 0,
             backgroundColor: '#ffffff',
           }}>
+          <StatusBar backgroundColor={'#fff'} barStyle={'dark-content'} />
           <View
             style={{
               flexDirection: 'column',
@@ -259,11 +302,7 @@ const App = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-            {filterLoading ? (
-              <View style={{alignSelf: 'flex-end', marginTop: 20}}>
-                <ActivityIndicator color={'#fff'} size={30} />
-              </View>
-            ) : (
+            {!filterLoading ? (
               <TouchableOpacity
                 style={{
                   flexDirection: 'row',
@@ -278,7 +317,10 @@ const App = () => {
                   marginTop: 20,
                 }}
                 activeOpacity={0.5}
-                onPress={() => setAppOptHandler()}>
+                onPress={() => {
+                  setFilterLoading(true);
+                  setAppOptHandler();
+                }}>
                 <Text
                   style={{
                     color: '#fff',
@@ -290,6 +332,10 @@ const App = () => {
                 </Text>
                 <Icon name="arrowright" size={20} color="#fff" />
               </TouchableOpacity>
+            ) : (
+              <View style={{alignSelf: 'flex-end', marginTop: 20}}>
+                <ActivityIndicator color={'#fff'} size={30} />
+              </View>
             )}
           </View>
         </View>
@@ -320,7 +366,7 @@ const App = () => {
               borderRadius: 10,
               backgroundColor: '#075e54',
             }}>
-            <ActivityIndicator color={'#fff'} size={30} />
+            <ActivityIndicator color={'red'} size={30} />
             {/* <Text
               style={{
                 color: '#fff',
@@ -366,7 +412,7 @@ const App = () => {
       </Tab.Navigator> */}
       <RootNavigator />
       {showBannerAd && (
-        <View style={{backgroundColor:'#fff'}}>
+        <View style={{backgroundColor: '#fff'}}>
           <BannerAd
             unitId={bannerAdId}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}

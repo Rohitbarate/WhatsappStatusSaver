@@ -185,6 +185,7 @@ const SelectedStatus = ({route, navigation}) => {
       const isExist = await RNFS.exists(destUrl + '/' + statusName);
       if (isExist) {
         ToastAndroid.show('Status is Already Downloaded', ToastAndroid.SHORT);
+        setDActionLoading(false);
       } else {
         createDestFile(sourceUrl, destUrl);
       }

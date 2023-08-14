@@ -5,17 +5,18 @@ import {
   ToastAndroid,
   PermissionsAndroid,
   Platform,
+  Linking,
 } from 'react-native';
 const {ScopedStorage} = NativeModules;
 import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import {check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFS from 'react-native-fs';
-import {RNLauncherKitHelper} from 'react-native-launcher-kit';
 import {
   getFocusedRouteNameFromRoute,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
+import SendIntentAndroid from 'react-native-send-intent';
 
 // Create the user context
 export const AppContext = createContext();
@@ -25,6 +26,7 @@ export const AppProvider = ({children}) => {
   const [isExtPermissionGranted, setIsExtPermissionGranted] = useState(false);
   const [isAccessGranted, setIsAccessGranted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showOpenAppSettings, setShowOpenAppSettings] = useState(false);
   const [sLoading, setSLoading] = useState(false);
   const [filter, setFilter] = useState('Videos'); // opts : 'IMAGES','VIDEOS','ALL' .etc
   const [savedFilter, setSavedFilter] = useState('Videos'); // opts : 'IMAGES','VIDEOS','ALL' .etc
@@ -48,7 +50,7 @@ export const AppProvider = ({children}) => {
 
   // const WhatsAppSavedStatusDirectory = `${RNFS.DocumentDirectoryPath}/Media/Statuses/`;
   const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
-  console.log({WhatsAppSavedStatusDirectory});
+  // console.log({WhatsAppSavedStatusDirectory});
 
   const onlyVideos = /\.(mp4)$/i;
   const onlyImages = /\.(jpg|jpeg|png|gif)$/i;
@@ -69,18 +71,6 @@ export const AppProvider = ({children}) => {
         appOpt.type,
       );
       console.log({mainRes: res});
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        {
-          title: 'Wi status saver needs storage Permission',
-          message:
-            'Wi status saver needs access to your storage ' +
-            'so you can download the statuses',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
       if (
         !res.success &&
         res.msg === 'The selected app is not installed on the device.'
@@ -143,33 +133,35 @@ export const AppProvider = ({children}) => {
       await ScopedStoragePackage.getPersistedUriPermissions();
     console.log({persistedUris});
     console.log({
+      acc: folderAccess.hasAccess,
       folderAccess,
-      isLatestVersion,
     });
     try {
       if (
         folderAccess.hasAccess === true &&
         persistedUris.length !== 0 &&
         folderAccess.folderUrl.length !== 0 &&
-        appV >= 29
+        Platform.Version >= 29
       ) {
         // setLoading(true);
-        console.log('fetch status');
+        console.log('fetch status Q');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
         files = await ScopedStoragePackage.listFiles(
           folderAccess.folderUrl,
           'ascii',
         );
         setLoading(false);
-      } else if (hasAccess == true && appV < 29) {
+      } else if (folderAccess.hasAccess == true && Platform.Version < 29) {
         console.log('fetch status old--v ');
         ToastAndroid.show('Fetching New Statuses...', ToastAndroid.LONG);
         files = await RNFS.readDir(folderAccess.folderUrl);
         setLoading(false);
       } else {
-        console.log('else');
+        console.log('else get statuses()');
         setLoading(false);
         setIsAccessGranted(false);
+        setShowDialogue(true);
+        return;
       }
       // console.log({rcFiles: files});
       if (filter === 'Images') {
@@ -194,57 +186,75 @@ export const AppProvider = ({children}) => {
 
   //  check scoped storage permission
   const getAccess = async () => {
-    console.log('getAccess() called');
     try {
       setAccessLoading(true);
       //  await AsyncStorage.clear()
+      console.log({isLatestVersionM: Platform.Version >= 29});
       // get folder link stored in asyncStorage
-
       const folderAccess = await getData();
       if (folderAccess === null) {
+        // user is new
         setAccessLoading(false);
         setShowDialogue(true);
         return;
       }
-      // get access folder links stored in persistedUris
-      const persistedUris =
-        await ScopedStoragePackage.getPersistedUriPermissions();
-      console.log({persistedUris});
 
-      if (folderAccess.hasAccess === false && persistedUris.length === 0) {
-        // user is new
-        setAccessLoading(false);
-        console.log('if');
-        setShowDialogue(true);
-        return false;
-      } else {
-        console.log('else');
-        if (folderAccess.hasAccess === true && persistedUris.length !== 0) {
-          // console.log('access');
-          setAccessLoading(false);
-          setShowDialogue(false);
-          await getStatuses();
-          // ToastAndroid.show(
-          //   'Welcome back to WIStatusSaver 🙋‍♂️🙋‍♂️',
-          //   ToastAndroid.SHORT,
-          // );
-          return true;
-        } else if (folderAccess !== null && persistedUris.length === 0) {
-          await AsyncStorage.removeItem('folderAccess');
+      // cond for 10+ version
+      if (Platform.Version >= 29) {
+        console.log(' 2️⃣2️⃣ getAccess() called 10+ version');
+        const persistedUris =
+          await ScopedStoragePackage.getPersistedUriPermissions();
+        // console.log({persistedUris});
+
+        if (folderAccess.hasAccess === false && persistedUris.length === 0) {
+          // user is new
           setAccessLoading(false);
           setShowDialogue(true);
-          return false;
         } else {
-          await ScopedStoragePackage.releasePersistableUriPermission(
-            persistedUris[0],
-          );
+          if (folderAccess.hasAccess === true && persistedUris.length !== 0) {
+            setAccessLoading(false);
+            setShowDialogue(false);
+            await getStatuses();
+            await requestExtPermissions();
+          } else if (folderAccess !== null && persistedUris.length === 0) {
+            // user removed scoped permission manually
+            await AsyncStorage.removeItem('folderAccess');
+            setAccessLoading(false);
+            setShowDialogue(true);
+          } else {
+            await ScopedStoragePackage.releasePersistableUriPermission(
+              persistedUris[0],
+            );
+            setAccessLoading(false);
+            setShowDialogue(true);
+          }
+        }
+      } else {
+        // cond for 10- version
+        console.log('getAccess() called 10- version');
+        // check ext storage permission
+
+        if (!isExtPermissionGranted && folderAccess.hasAccess === false) {
+          // user is new
           setAccessLoading(false);
           setShowDialogue(true);
-          return false;
+        } else {
+          if (folderAccess.hasAccess === true && isExtPermissionGranted) {
+            setAccessLoading(false);
+            setShowDialogue(false);
+            await getStatuses();
+          } else if (folderAccess !== null && !isExtPermissionGranted) {
+            console.log(' 💥💥💥 ext permission not found');
+            await AsyncStorage.removeItem('folderAccess');
+            setAccessLoading(false);
+            setShowDialogue(true);
+          } else {
+            setAccessLoading(false);
+            setShowDialogue(true);
+          }
         }
-
-        // await AsyncStorage.clear();
       }
+      // get access folder links stored in persistedUris
     } catch (error) {
       console.log(error);
       setAccessLoading(false);
@@ -280,52 +290,106 @@ export const AppProvider = ({children}) => {
       const read_storage = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         {
-          title: 'Wi status saver needs storage Permission',
+          title: 'Wi status saver needs read storage Permission',
           message:
             'Wi status saver needs access to your storage ' +
             'so you can download the statuses',
-          buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',
         },
       );
-      const write_storage = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Cool Photo App Camera Permission',
-          message:
-            'Cool Photo App needs access to your camera ' +
-            'so you can take awesome pictures.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
+
       if (read_storage === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can use the camera');
-        setIsExtPermissionGranted(true);
-        await storeData({
-          hasAccess: true,
-          folderUrl:
-            'file:///storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/',
-        });
-      } else {
-        console.log('Camera permission denied');
+        console.log('Read storage permission granted');
+        // setIsExtPermissionGranted(true);
+
+        const write_storage = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        );
+
+        if (write_storage === PermissionsAndroid.RESULTS.GRANTED) {
+          // You can now read and write to external storage
+          console.log('Write storage permission granted');
+          setShowOpenAppSettings(false);
+          setIsExtPermissionGranted(true);
+          if (Platform.Version < 29) {
+            await storeData({
+              hasAccess: true,
+              folderUrl:
+                'file:///storage/emulated/0/Android/media/com.whatsapp/Whatsapp/Media/.Statuses/',
+            });
+            await getStatuses();
+          }
+          await getSavedStatuses();
+        } else if (
+          write_storage === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
+        ) {
+          console.log('Write storage permission denied permanently');
+          setIsExtPermissionGranted(false);
+          setShowOpenAppSettings(true);
+          ToastAndroid.show(
+            'Go to Settings > Permissions > Allow to Write Storage Permission',
+            ToastAndroid.LONG,
+          );
+        } else {
+          console.log('Write storage permission denied');
+          setIsExtPermissionGranted(false);
+          setShowOpenAppSettings(false);
+        }
+      } else if (read_storage === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+        console.log('Read storage permission denied permanently');
         setIsExtPermissionGranted(false);
+        // Prompt the user to open app settings
+        ToastAndroid.show(
+          'Go to Settings > Permissions > Allow to Read Storage Permission',
+          ToastAndroid.LONG,
+        );
+        setShowOpenAppSettings(true);
+        // openAppSettings();
+      } else {
+        console.log('Read storage permission denied');
+        setIsExtPermissionGranted(false);
+        setShowOpenAppSettings(false);
       }
     } catch (err) {
       console.warn('Error while requesting storage permissions:', err);
       setIsExtPermissionGranted(false);
+      setShowOpenAppSettings(false);
     }
   };
+
+  // check ext. storage permission
+  const checkExtPermissions = async () => {
+    try {
+      setAccessLoading(true);
+      const readPermissionStatus = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      );
+      const writePermissionStatus = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      );
+
+      if (readPermissionStatus && writePermissionStatus) {
+        console.log('Read and write storage permissions are granted');
+        setIsExtPermissionGranted(true);
+      } else {
+        console.log('Read and write storage permissions are not granted');
+        setIsExtPermissionGranted(false);
+      }
+      setAccessLoading(false);
+    } catch (error) {
+      console.log(error);
+      setAccessLoading(false);
+      // setShowDialogue(true);
+      return false;
+    }
+  };
+
   // get saved statuses in device DCIM/wi_status_saver
   const getSavedStatuses = async () => {
     try {
       console.log('getSavedStatuses called !');
       setSLoading(true);
-      // const appV = Platform.Version;
-      // if (appV >= 29) {
-      //   setIsExtPermissionGranted(true);
       const isPathExist = await RNFS.exists(WhatsAppSavedStatusDirectory);
       // console.log({isPathExist});
       if (!isPathExist) {
@@ -335,14 +399,14 @@ export const AppProvider = ({children}) => {
       // console.log({files});
       if (savedFilter === 'Images') {
         const filterFiles = files.filter(file => onlyImages.test(file.name));
-        console.log({images: filterFiles});
+        // console.log({images: filterFiles});
         setSavedStatuses(preState => ({...preState, allStatuses: filterFiles}));
         if (filterFiles.length === 0) {
           ToastAndroid.show('Status not found', ToastAndroid.SHORT);
         }
       } else if (savedFilter === 'Videos') {
         const filterFiles = files.filter(file => onlyVideos.test(file.name));
-        console.log({videos: filterFiles});
+        // console.log({videos: filterFiles});
         const trashedRemovedF = filterFiles.filter(file => {
           return !file.name.includes('.trashed');
         });
@@ -366,7 +430,7 @@ export const AppProvider = ({children}) => {
           ToastAndroid.show('Status not found', ToastAndroid.SHORT);
         }
 
-        console.log({All: filterFiles});
+        // console.log({All: filterFiles});
       }
       setSLoading(false);
     } catch (error) {
@@ -400,15 +464,16 @@ export const AppProvider = ({children}) => {
   //  change app type
   const changeAppOptHandler = async apptype => {
     console.log({changeAppOptHandler_log: apptype});
-    const result = await RNLauncherKitHelper.checkIfPackageInstalled(
+
+    const result = await SendIntentAndroid.isAppInstalled(
       apptype === 'whatsapp' ? 'com.whatsapp' : 'com.whatsapp.w4b',
     );
     console.log({result});
     if (!result) {
       ToastAndroid.show(
         `${
-          apptype == 'whatsappB' ? 'Whatsapp Business' : apptype
-        } not installed in your device.`,
+          apptype == 'whatsappB' ? '@ Whatsapp Business' : '@' + apptype
+        } not found in your device. `,
         ToastAndroid.LONG,
       );
     }
@@ -454,6 +519,11 @@ export const AppProvider = ({children}) => {
     storeWT,
     scrollEnabled,
     setScrollEnabled,
+    appVersion,
+    setAppVersion,
+    showOpenAppSettings,
+    setShowOpenAppSettings,
+    checkExtPermissions,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

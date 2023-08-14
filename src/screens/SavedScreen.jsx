@@ -13,6 +13,7 @@ import {
   Dimensions,
   BackHandler,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
@@ -33,6 +34,11 @@ const SavedScreen = ({navigation}) => {
     setSavedFilter,
     sLoading,
     setSLoading,
+    appVersion,
+    showAppTypeDilogue,
+    isLatestVersion,
+    showOpenAppSettings,
+    checkExtPermissions,
   } = useContext(AppContext);
   // const [sLoading, setSLoading] = useState(false);
   // const [filter, setFilter] = useState(savedFilter); // opts : 'IMAGES','VIDEOS','ALL' .etc
@@ -51,7 +57,7 @@ const SavedScreen = ({navigation}) => {
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    getSavedStatuses();
+    checkExtPermissions();
     const backAction = () => {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -76,7 +82,7 @@ const SavedScreen = ({navigation}) => {
     );
 
     // const unsubscribe = navigation.addListener('focus', () => {
-    //   getSavedStatuses();
+    //   // getSavedStatuses();
     //   console.log('focus');
     // });
 
@@ -125,7 +131,7 @@ const SavedScreen = ({navigation}) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         paddingHorizontal: 10,
-        paddingBottom:10
+        paddingBottom: 10,
       }}>
       {sLoading && savedStatuses.allStatuses.length === 0 && (
         <View
@@ -198,7 +204,7 @@ const SavedScreen = ({navigation}) => {
         </View>
       </View>
 
-      {/* {!isExtPermissionGranted && (
+      {/* {!isExtPermissionGranted && !showAppTypeDilogue && (
         <Modal animationType="slide" transparent={true}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -210,7 +216,7 @@ const SavedScreen = ({navigation}) => {
                   textAlign: 'center',
                   textTransform: 'capitalize',
                 }}>
-                App Needs Storage Permission to load your whatsapp savedStatuses
+                App Needs Storage Permission to load your whatsapp Statuses
               </Text>
               <TouchableOpacity
                 onPress={requestExtPermissions}
@@ -221,6 +227,69 @@ const SavedScreen = ({navigation}) => {
           </View>
         </Modal>
       )} */}
+
+      {/* {showOpenAppSettings && (
+        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <View style={styles.modalView}>
+            <Text
+              style={{
+                color: '#000',
+                fontSize: 14,
+                fontWeight: 500,
+                textAlign: 'center',
+                textTransform: 'capitalize',
+              }}>
+              Storage Permission is mandatory to access your media
+            </Text>
+            <Text
+              style={{
+                color: '#00000080',
+                fontSize: 12,
+                fontWeight: 500,
+                textAlign: 'center',
+                textTransform: 'capitalize',
+              }}>
+             Setting {'> '}Permissions {'> '}Allow Storage Permission
+            </Text>
+            <TouchableOpacity
+              onPress={()=> Linking.openSettings()}
+              style={styles.prmBtn}>
+              <Text style={styles.prmBtnText}>Open Setting</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )} */}
+
+      {!isExtPermissionGranted && !showAppTypeDilogue && (
+        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <View style={styles.modalView}>
+            <Text
+              style={{
+                color: '#000',
+                fontSize: 14,
+                fontWeight: 500,
+                textAlign: 'center',
+                textTransform: 'capitalize',
+              }}>
+              App Needs Storage Permission to load your saved Statuses
+            </Text>
+
+            {showOpenAppSettings ? (
+              <TouchableOpacity
+                onPress={() => Linking.openSettings()}
+                style={styles.prmBtn}>
+                <Text style={styles.prmBtnText}>Open Setting</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={requestExtPermissions}
+                style={styles.prmBtn}>
+                <Text style={styles.prmBtnText}>Grant Permission</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
 
       {savedStatuses.allStatuses.length !== 0 ? (
         <FlatList
@@ -249,14 +318,15 @@ const SavedScreen = ({navigation}) => {
           )}
         />
       ) : (
-        !sLoading && (
+        !sLoading &&
+        isExtPermissionGranted && (
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-            <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
+            <Text style={{color: '#000', fontSize: 18, fontWeight: '500'}}>
               Downloaded status not found,
             </Text>
             <Text style={{color: '#00000080', fontSize: 14}}>
-              Download savedStatuses from RECENT screen{' '}
+              First download statuses to see here
             </Text>
             <TouchableOpacity
               onPress={getSavedStatuses}
@@ -266,7 +336,7 @@ const SavedScreen = ({navigation}) => {
           </View>
         )
       )}
-       {showScrollButton && (
+      {showScrollButton && (
         <TouchableOpacity
           onPress={handleScrollToTop}
           style={styles.scrollButton}>
@@ -322,9 +392,9 @@ const styles = StyleSheet.create({
     borderColor: 'green',
   },
   prmBtn: {
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: 'green',
-    paddingVertical: 5,
+    paddingVertical: 10,
     paddingHorizontal: 10,
     marginTop: 10,
   },

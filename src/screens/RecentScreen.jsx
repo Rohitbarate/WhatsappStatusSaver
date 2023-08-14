@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   NativeModules,
   StatusBar,
+  Linking,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import StatusView from '../components/StatusView';
@@ -30,9 +31,11 @@ import * as ScopedStoragePackage from 'react-native-scoped-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FilterBtn from '../components/FilterBtn';
 import Icon from 'react-native-vector-icons/Feather';
-import {AppContext, setShowAppTypeDilogue} from '../context/appContext';
+import Icon2 from 'react-native-vector-icons/Ionicons';
+import {AppContext} from '../context/appContext';
+import SendIntentAndroid from 'react-native-send-intent';
 
-const RecentScreen = ({navigation,}) => {
+const RecentScreen = ({navigation}) => {
   const {
     requestScopedPermissionAccess,
     getData,
@@ -53,6 +56,7 @@ const RecentScreen = ({navigation,}) => {
     isLatestVersion,
     isExtPermissionGranted,
     showAppTypeDilogue,
+    requestExtPermissions
   } = useContext(AppContext);
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
@@ -64,7 +68,7 @@ const RecentScreen = ({navigation,}) => {
 
   useEffect(() => {
     // if (isLatestVersion) {
-    getAccess();
+    // getAccess();
     // getStatuses();
     // } else {
     // isExtPermissionGranted && (
@@ -132,7 +136,7 @@ const RecentScreen = ({navigation,}) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         // paddingHorizontal:10
-        paddingBottom:10
+        paddingBottom: 10,
       }}>
       {/* file loading component */}
       {accessLoading && (
@@ -178,36 +182,70 @@ const RecentScreen = ({navigation,}) => {
 
       {showDilogue && !accessLoading && !showAppTypeDilogue && (
         <View style={{flex: 1, position: 'absolute'}}>
-          <Modal animationType="slide" transparent={true}>
+          <StatusBar backgroundColor={'red'} barStyle={'light-content'} />
+          <Modal animationType="fade" transparent={true}>
             <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Image
-                  source={require('../assets/permission_img.jpg')}
-                  style={{
-                    height: undefined,
-                    width: 250,
-                    aspectRatio: 3 / 4,
-                    borderRadius: 10,
-                  }}
-                />
-                <Text
-                  style={{
-                    color: '#000',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    textAlign: 'center',
-                    textTransform: 'capitalize',
-                    marginTop: 10,
-                  }}>
-                  App Needs Storage Permission to download your whatsapp
-                  statuses
-                </Text>
-                <TouchableOpacity
-                  onPress={requestScopedPermissionAccess}
-                  style={styles.prmBtn}>
-                  <Text style={styles.prmBtnText}>Grant Permission</Text>
-                </TouchableOpacity>
-              </View>
+              {Platform.Version >= 29 ? (
+                // scoped storage permission view --v (10+)
+                <View style={styles.modalView}>
+                  <Image
+                    source={require('../assets/permission_img.jpg')}
+                    style={{
+                      height: undefined,
+                      width: 250,
+                      aspectRatio: 3 / 4,
+                      borderRadius: 10,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      color: '#000',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      textAlign: 'center',
+                      textTransform: 'capitalize',
+                      marginTop: 10,
+                    }}>
+                    App Needs Storage Permission to download your whatsapp
+                    statuses
+                  </Text>
+                  <TouchableOpacity
+                    onPress={requestScopedPermissionAccess}
+                    style={styles.prmBtn}>
+                    <Text style={styles.prmBtnText}>Grant Permission</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                // external storage permission view --v (10-)
+                <View style={styles.modalView}>
+                  {/* <Image
+                    source={require('../assets/permission_img.jpg')}
+                    style={{
+                      height: undefined,
+                      width: 250,
+                      aspectRatio: 3 / 4,
+                      borderRadius: 10,
+                    }}
+                  /> */}
+                  <Text
+                    style={{
+                      color: '#000',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      textAlign: 'center',
+                      textTransform: 'capitalize',
+                      marginTop: 10,
+                    }}>
+                    App Needs Storage Permission to download your whatsapp
+                    statuses
+                  </Text>
+                  <TouchableOpacity
+                    onPress={requestExtPermissions}
+                    style={styles.prmBtn}>
+                    <Text style={styles.prmBtnText}>Grant Permission</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </Modal>
         </View>
@@ -315,14 +353,31 @@ const RecentScreen = ({navigation,}) => {
         !showDilogue && (
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-            <Text style={{color: '#000', fontSize: 20, fontWeight: '500'}}>
-              Status not found,
+            <Text style={{color: '#000', fontSize: 18, fontWeight: '500'}}>
+              Status not available,
             </Text>
             <Text style={{color: '#00000080', fontSize: 14}}>
               See statuses in whatsapp app
             </Text>
             <TouchableOpacity onPress={getStatuses} style={styles.prmBtn}>
               <Text style={styles.prmBtnText}>Reload</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                SendIntentAndroid.openApp('com.whatsapp').then(wasOpened => {})
+              }
+              style={[
+                styles.prmBtn,
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+              ]}>
+              <Icon2 name="logo-whatsapp" size={25} color={'#fff'} />
+              <Text style={[styles.prmBtnText, {marginLeft: 5}]}>
+                Open Whatsapp
+              </Text>
             </TouchableOpacity>
           </View>
         )
@@ -384,7 +439,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   prmBtn: {
-    borderRadius: 10,
+    borderRadius: 6,
     backgroundColor: 'green',
     paddingVertical: 10,
     paddingHorizontal: 10,

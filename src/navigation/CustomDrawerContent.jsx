@@ -1,4 +1,4 @@
-import {StatusBar, StyleSheet, Text, View, Image, Linking} from 'react-native';
+import {StatusBar, StyleSheet, Text, View, Alert, Linking} from 'react-native';
 import React from 'react';
 import {
   DrawerContentScrollView,
@@ -9,6 +9,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import SendIntentAndroid from 'react-native-send-intent';
 
 const CustomDrawerContent = props => {
   const AppShareImgDir = `${RNFS.DocumentDirectoryPath}/media/shareApp.png`;
@@ -46,18 +47,35 @@ const CustomDrawerContent = props => {
   const shareAppOptions = {
     message:
       '*Check out our WhatsApp Status Saver app!* \n\nHey there! \n  I wanted to share an amazing app with you: WI Status Saver.It lets you easily save and share WhatsApp statuses like photos, videos, and GIFs. No more asking friends to send them separately – you can download them directly to your device and access them anytime! \n\n *Main Features:*\n\n 📸 Save Photos\n 🎥 Save Videos\n 🚀 Easy Sharing\n ⭐️ Favorites\n 🔍 In-App Gallery\n\n The app is free, user-friendly, and perfect for saving and sharing WhatsApp statuses with ease!\n\n *How to Get Started:*\n\n1. [Link to App Store] - Download WhatsApp Status Saver.\n\n2. Install and grant permissions.\n\n3. Open WhatsApp, view the status you want to save.\n\n4. Go back to WhatsApp Status Saver – the status will be automatically saved.\n',
-    url: 'https://github.com/Rohitbarate/WhatsappStatusSaver/releases',
+    url: 'https://photos.app.goo.gl/1VkicHncnjK16kHQ6',
+    // url: 'https://github.com/Rohitbarate/WhatsappStatusSaver/releases',
   };
 
   const shareAppHandler = async () => {
     // await uploadShareAppImg();
-    Share.open(shareAppOptions)
+    // Share.open(shareAppOptions)
+    //   .then(res => {
+    //     console.log(res);
+    //   })
+    //   .catch(err => {
+    //     err && console.log(err);
+    //   });
+    let imageUri;
+    RNFS.readDirAssets('images')
       .then(res => {
-        console.log(res);
+        console.log({assets: res});
+        imageUri = `asset:/app/src/main/assets/${res.path}`;
       })
       .catch(err => {
         err && console.log(err);
       });
+
+    Share.open({
+      url: imageUri,
+      type: 'image/jpeg', // Set the appropriate image type
+    })
+      .then(res => console.log('Share response:', res))
+      .catch(err => console.log('Share error:', err));
   };
 
   return (
@@ -84,6 +102,7 @@ const CustomDrawerContent = props => {
           opacity: 0.2,
         }}
       />
+     // SendIntentAndroid.installRemoteApp("https://example.com/my-app.apk", "my-saved-app.apk").then(installWasStarted => {});
       <DrawerItem
         label={'Check for update'}
         icon={({focused, color, size}) => (
@@ -175,7 +194,16 @@ const CustomDrawerContent = props => {
             name={'bug'}
           />
         )}
-        onPress={() => Linking.openURL('https://forms.gle/UAYCYcGNv3JSLjfB6')}
+        onPress={async () => {
+          const supported = await Linking.canOpenURL(
+            'https://forms.gle/UAYCYcGNv3JSLjfB6',
+          );
+          if (supported) {
+            Linking.openURL('https://forms.gle/UAYCYcGNv3JSLjfB6');
+          } else {
+            Alert.alert('Failed to open form', 'Try again after some type');
+          }
+        }}
       />
       <DrawerItem
         label={'Suggest a feature'}
@@ -191,7 +219,16 @@ const CustomDrawerContent = props => {
             name={'lightbulb-on-outline'}
           />
         )}
-        onPress={() => Linking.openURL('https://forms.gle/1ouqv851sADMNVpi8')}
+        onPress={async () => {
+          const supported = await Linking.canOpenURL(
+            'https://forms.gle/1ouqv851sADMNVpi8',
+          );
+          if (supported) {
+            Linking.openURL('https://forms.gle/1ouqv851sADMNVpi8');
+          } else {
+            Alert.alert('Failed to open form', 'Try again after some type');
+          }
+        }}
       />
     </DrawerContentScrollView>
   );

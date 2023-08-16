@@ -34,6 +34,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import {AppContext} from '../context/appContext';
 import SendIntentAndroid from 'react-native-send-intent';
+import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
 const RecentScreen = ({navigation}) => {
   const {
@@ -56,7 +57,7 @@ const RecentScreen = ({navigation}) => {
     isLatestVersion,
     isExtPermissionGranted,
     showAppTypeDilogue,
-    requestExtPermissions
+    requestExtPermissions,
   } = useContext(AppContext);
 
   const [isCrntStatusVisible, setIsCrntStatusVisible] = useState(false);
@@ -69,7 +70,7 @@ const RecentScreen = ({navigation}) => {
   useEffect(() => {
     // if (isLatestVersion) {
     // getAccess();
-    // getStatuses();
+    getStatuses();
     // } else {
     // isExtPermissionGranted && (
     //   // const statu
@@ -121,6 +122,7 @@ const RecentScreen = ({navigation}) => {
   const handleFilter = filterOption => {
     setFilter(filterOption);
     handleScrollToTop();
+    // getStatuses()
   };
 
   // const currentTime = new Date();
@@ -129,6 +131,10 @@ const RecentScreen = ({navigation}) => {
     return b.lastModified - a.lastModified;
   });
 
+  const bannerAdId = __DEV__
+    ? TestIds.BANNER
+    : 'ca-app-pub-9923230267052642/1145057793';
+
   return (
     <View
       style={{
@@ -136,7 +142,7 @@ const RecentScreen = ({navigation}) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         // paddingHorizontal:10
-        paddingBottom: 10,
+        // paddingBottom: 10,
       }}>
       {/* file loading component */}
       {accessLoading && (
@@ -334,6 +340,7 @@ const RecentScreen = ({navigation}) => {
           scrollIndicatorInsets={{right: 2}}
           numColumns={2}
           onScroll={handleScroll}
+          scrollEventThrottle={16}
           data={sortedData}
           keyExtractor={item => item.name}
           renderItem={({item}) => (
@@ -390,6 +397,15 @@ const RecentScreen = ({navigation}) => {
           <Icon name="arrow-up" size={30} color={'#fff'} />
         </TouchableOpacity>
       )}
+      {/* <View style={{backgroundColor: '#fff',marginTop:2}}>
+        <BannerAd
+          unitId={bannerAdId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+        />
+      </View> */}
     </View>
   );
 };

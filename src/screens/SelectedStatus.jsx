@@ -26,6 +26,23 @@ import Pinchable from 'react-native-pinchable';
 import {AppContext} from '../context/appContext';
 import {useIsFocused, useRoute} from '@react-navigation/native';
 import PushNotification from 'react-native-push-notification';
+import {
+  RewardedAdEventType,
+  RewardedInterstitialAd,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+
+const adUnitId = __DEV__
+  ? TestIds.REWARDED_INTERSTITIAL
+  : 'ca-app-pub-9923230267052642/7448312503';
+
+const rewardedInterstitial = RewardedInterstitialAd.createForAdRequest(
+  adUnitId,
+  {
+    requestNonPersonalizedAdsOnly: true,
+    keywords: ['fashion', 'clothing', 'social'],
+  },
+);
 
 const SelectedStatus = ({route, navigation}) => {
   const {uri, statusName, mime} = route.params;
@@ -41,11 +58,12 @@ const SelectedStatus = ({route, navigation}) => {
   // const [newStatusName, setNewStatusName] = useState(statusName);
   const {getSavedStatuses, setScrollEnabled} = useContext(AppContext);
   const {ContentUriToAbsolutePathModule} = NativeModules;
+  const [loaded, setLoaded] = useState(false);
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
 
-  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver/`;
+  const WhatsAppSavedStatusDirectory = `${RNFS.DCIMDirectoryPath}/wi_status_saver`;
 
   useEffect(() => {
     statusName.indexOf('.mp4') == -1
@@ -53,6 +71,7 @@ const SelectedStatus = ({route, navigation}) => {
       : setStatusType('VID');
 
     checkIsSaved();
+    rewardedInterstitial.load();
 
     console.log({WhatsAppSavedStatusDirectory});
     function backAction() {
@@ -82,9 +101,28 @@ const SelectedStatus = ({route, navigation}) => {
     // setScrollEnabled(false)
     // });
 
+    const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
+      RewardedAdEventType.LOADED,
+      () => {
+        setLoaded(true);
+        // rewardedInterstitial.show();
+      },
+    );
+
+    const unsubscribeEarned = rewardedInterstitial.addAdEventListener(
+      RewardedAdEventType.EARNED_REWARD,
+      reward => {
+        console.log('User earned reward of ', reward);
+        downloadStatusHandler();
+      },
+    );
+
     // Cleanup the event listener when the component is unmounted
     return () => {
       backHandler.remove();
+      unsubscribeLoaded();
+      unsubscribeEarned();
+      // setLoaded(false);
       // unsubscribe;
       // setScrollEnabled(true)
     };
@@ -93,20 +131,25 @@ const SelectedStatus = ({route, navigation}) => {
   const videoRef = useRef(null);
 
   const checkIsSaved = async () => {
-    // setScrollEnabled(false)
-    const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
-    console.log({savedFiles});
-    console.log({statusName});
-    if (savedFiles) {
-      const res = savedFiles.some(s => s.includes(statusName));
-      if (res) {
-        console.log('saved');
-        setIsSaved(true);
-      } else {
-        setIsSaved(false);
-        console.log('not saved');
+    try {
+      const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
+      console.log({savedFiles});
+      console.log({statusName});
+      if (savedFiles) {
+        const res = savedFiles.some(s => s.includes(statusName));
+        if (res) {
+          console.log('saved');
+          setIsSaved(true);
+        } else {
+          setIsSaved(false);
+          console.log('not saved');
+        }
       }
+    } catch (error) {
+      await RNFS.mkdir(WhatsAppSavedStatusDirectory);
+      console.log(error);
     }
+    // setScrollEnabled(false)
   };
 
   const handleShareToWhatsapp = async url => {
@@ -118,7 +161,7 @@ const SelectedStatus = ({route, navigation}) => {
       }
       console.log('Absolute Path:', absolutePath);
       Share.shareSingle({
-        message: 'This Status is shared using WI STATUS SAVER',
+        // message: 'This Status is shared using WI STATUS SAVER',
         url: absolutePath,
         social: Share.Social.WHATSAPP,
       })
@@ -146,7 +189,7 @@ const SelectedStatus = ({route, navigation}) => {
     }
     console.log('Absolute Path:', absolutePath);
     Share.open({
-      message: 'This Status is shared using WI STATUS SAVER',
+      // message: 'This Status is shared using WI STATUS SAVER',
       url: absolutePath,
     })
       .then(res => {
@@ -182,12 +225,15 @@ const SelectedStatus = ({route, navigation}) => {
     });
 
     try {
-      const isExist = await RNFS.exists(destUrl + '/' + statusName);
-      if (isExist) {
-        ToastAndroid.show('Status is Already Downloaded', ToastAndroid.SHORT);
-        setDActionLoading(false);
-      } else {
-        createDestFile(sourceUrl, destUrl);
+      const savedFiles = await RNFS.readdir(WhatsAppSavedStatusDirectory);
+      if (savedFiles) {
+        const isExist = savedFiles.some(s => s.includes(statusName));
+        if (isExist) {
+          ToastAndroid.show('Status is Already Downloaded', ToastAndroid.SHORT);
+          setDActionLoading(false);
+        } else {
+          createDestFile(sourceUrl, destUrl);
+        }
       }
     } catch (error) {
       setDActionLoading(false);
@@ -212,6 +258,7 @@ const SelectedStatus = ({route, navigation}) => {
     } catch (error) {
       setDActionLoading(false);
       console.log({error});
+      ToastAndroid.show('Download failed, try again', ToastAndroid.SHORT);
     }
   };
 
@@ -252,6 +299,7 @@ const SelectedStatus = ({route, navigation}) => {
         getSavedStatuses();
       });
     } catch (error) {
+      ToastAndroid.show('Download failed, try again', ToastAndroid.SHORT);
       setDActionLoading(false);
       console.log({error});
     }
@@ -287,7 +335,6 @@ const SelectedStatus = ({route, navigation}) => {
   };
 
   const deleteStatusHandler = async () => {
-    setDActionLoading(true);
     Alert.alert(
       '',
       'Delete status?',
@@ -301,18 +348,21 @@ const SelectedStatus = ({route, navigation}) => {
         {
           text: 'delete',
           onPress: async () => {
+            setDActionLoading(true);
             const isExist = await RNFS.exists(
-              WhatsAppSavedStatusDirectory + statusName,
+              WhatsAppSavedStatusDirectory + '/' + statusName,
             );
             if (!isExist) {
               ToastAndroid.show('Status not available', ToastAndroid.SHORT);
               navigation.goBack();
-              console.log({unlink: WhatsAppSavedStatusDirectory + statusName});
+              console.log({
+                unlink: WhatsAppSavedStatusDirectory + '/' + statusName,
+              });
               setDActionLoading(false);
               return;
             }
 
-            await RNFS.unlink(WhatsAppSavedStatusDirectory + statusName)
+            await RNFS.unlink(WhatsAppSavedStatusDirectory + '/' + statusName)
               .then(() => {
                 console.log('FILE DELETED');
                 // ToastAndroid.show('Status Deleted', ToastAndroid.SHORT);
@@ -486,7 +536,7 @@ const SelectedStatus = ({route, navigation}) => {
           )}
         </TouchableOpacity>
       )}
-
+      {/* btn view */}
       <View style={styles.btnView}>
         <TouchableOpacity
           activeOpacity={0.7}
@@ -504,7 +554,15 @@ const SelectedStatus = ({route, navigation}) => {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
-            isSaved ? deleteStatusHandler() : downloadStatusHandler();
+            if (isSaved) {
+              deleteStatusHandler();
+            } else {
+              if (rewardedInterstitial.loaded) {
+                rewardedInterstitial.show();
+              } else {
+                downloadStatusHandler();
+              }
+            }
           }}
           style={[
             styles.button,

@@ -44,8 +44,8 @@ const {ScopedStorage} = NativeModules;
 
 const App = () => {
   const {
-    requestExtPermissions,
     getAccess,
+    requestExtPermissions,
     setIsLatestVersion,
     requestScopedPermissionAccess,
     isLatestVersion,
@@ -62,11 +62,12 @@ const App = () => {
     showOpenAppSettings,
     setShowOpenAppSettings,
     checkExtPermissions,
+    downloadAndCopyImage,
   } = useContext(AppContext);
   const [tempAppType, setTempAppType] = useState(appOpt.type);
   const [loading, setLoading] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [showBannerAd, setShowBannerAd] = useState(false);
+  const [showBannerAd, setShowBannerAd] = useState(true);
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
@@ -88,15 +89,15 @@ const App = () => {
     // setFilterLoading(true);
     appOpenAd.load();
     const appV = Platform.Version;
+    downloadAndCopyImage();
 
-    checkExtPermissions();
     // const appV = 28; for test
     setAppVersion(appV);
     // const appV = 28
 
     appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
       // appOpenAd.show();
-      setShowBannerAd(true);
+      // setShowBannerAd(true);
     });
 
     // check app version
@@ -122,6 +123,7 @@ const App = () => {
       //  app-V less than android 10
       if (Platform.Version < 29) {
         setIsLatestVersion(false);
+        checkExtPermissions();
       } else {
         setIsLatestVersion(true);
       }
@@ -145,7 +147,6 @@ const App = () => {
         setShowAppTypeDilogue(true);
         SplashScreen.hide();
       }
-     
     };
 
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -419,6 +420,8 @@ const App = () => {
             requestOptions={{
               requestNonPersonalizedAdsOnly: true,
             }}
+            onAdLoaded={() => setShowBannerAd(true)}
+            onAdFailedToLoad={() => setShowBannerAd(false)}
           />
         </View>
       )}

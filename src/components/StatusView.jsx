@@ -84,11 +84,6 @@ const StatusView = ({
     <TouchableOpacity
       activeOpacity={0.6}
       onPress={() => {
-        // setStatuses(prevState => ({
-        //   ...prevState,
-        //   currentMedia: item.uri || item.path,
-        //   mediaName: item.name,
-        // }));
         navigation.navigate('SelectedStatusScreen', {
           uri: status.filePath,
           statusName: status.fileName,

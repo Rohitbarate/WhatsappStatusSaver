@@ -21,6 +21,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import FilterBtn from '../components/FilterBtn';
 import {AppContext} from '../context/appContext';
 import Icon from 'react-native-vector-icons/Feather';
+import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
 const SavedScreen = ({navigation}) => {
   const {
@@ -48,6 +49,7 @@ const SavedScreen = ({navigation}) => {
   const {height, width} = Dimensions.get('window');
   const [fileNames, setFileNames] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
+
   // const [savedStatuses, setSavedStatuses] = useState({
   //   allStatuses: [],
   //   currentMedia: '',
@@ -82,7 +84,7 @@ const SavedScreen = ({navigation}) => {
     );
 
     // const unsubscribe = navigation.addListener('focus', () => {
-    //   // getSavedStatuses();
+    getSavedStatuses();
     //   console.log('focus');
     // });
 
@@ -124,6 +126,10 @@ const SavedScreen = ({navigation}) => {
     return differenceA - differenceB;
   });
 
+  const bannerAdId = __DEV__
+    ? TestIds.BANNER
+    : 'ca-app-pub-9923230267052642/1145057793';
+
   return (
     <View
       style={{
@@ -131,7 +137,7 @@ const SavedScreen = ({navigation}) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         paddingHorizontal: 10,
-        paddingBottom: 10,
+        // paddingBottom: 10,
       }}>
       {sLoading && savedStatuses.allStatuses.length === 0 && (
         <View
@@ -260,7 +266,7 @@ const SavedScreen = ({navigation}) => {
         </View>
       )} */}
 
-      {!isExtPermissionGranted && !showAppTypeDilogue && (
+      {/* {!isExtPermissionGranted && !showAppTypeDilogue && (
         <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
           <View style={styles.modalView}>
             <Text
@@ -289,7 +295,7 @@ const SavedScreen = ({navigation}) => {
             )}
           </View>
         </View>
-      )}
+      )} */}
 
       {savedStatuses.allStatuses.length !== 0 ? (
         <FlatList
@@ -301,6 +307,7 @@ const SavedScreen = ({navigation}) => {
           onRefresh={() => getSavedStatuses()}
           ref={flatListRef}
           showsVerticalScrollIndicator={true}
+          scrollEventThrottle={16}
           scrollIndicatorInsets={{right: 2}}
           numColumns={2}
           data={sortedData}
@@ -319,7 +326,8 @@ const SavedScreen = ({navigation}) => {
         />
       ) : (
         !sLoading &&
-        isExtPermissionGranted && (
+        // isExtPermissionGranted &&
+         (
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
             <Text style={{color: '#000', fontSize: 18, fontWeight: '500'}}>
@@ -343,6 +351,15 @@ const SavedScreen = ({navigation}) => {
           <Icon name="arrow-up" size={30} color={'#fff'} />
         </TouchableOpacity>
       )}
+      {/* <View style={{backgroundColor: '#fff',marginTop:2}}>
+        <BannerAd
+          unitId={bannerAdId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+        />
+      </View> */}
     </View>
   );
 };

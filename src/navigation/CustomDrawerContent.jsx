@@ -10,72 +10,25 @@ import Feather from 'react-native-vector-icons/Feather';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import SendIntentAndroid from 'react-native-send-intent';
+import RNFetchBlob from 'rn-fetch-blob';
 
 const CustomDrawerContent = props => {
   const AppShareImgDir = `${RNFS.DocumentDirectoryPath}/media/shareApp.png`;
   const AppDir = `${RNFS.DocumentDirectoryPath}/media/`;
 
-  // console.log({imageURI});
-  const uploadShareAppImg = async () => {
-    const imageExists = await RNFS.exists(AppShareImgDir);
-
-    if (!imageExists) {
-      RNFS.copyFileAssets('whatsapp-business-green', AppShareImgDir)
-        .then(() => {
-          console.log('Image copied successfully to the document directory.');
-        })
-        .catch(err => {
-          console.log({err});
-        });
-    } else {
-      console.log('Image already exists in the document directory.');
-      RNFS.unlink(AppShareImgDir)
-        .then(() => {
-          // console.log('FILE DELETED');
-          // ToastAndroid.show('Status deleted', ToastAndroid.SHORT);
-          // navigation.goBack();
-        })
-        .catch(err => {
-          console.log(err.message);
-          ToastAndroid.show(err.message, ToastAndroid.SHORT);
-        });
-    }
-    const files = await RNFS.readDir(AppDir);
-    console.log({files});
-  };
-
   const shareAppOptions = {
     message:
-      '*Check out our WhatsApp Status Saver app!* \n\nHey there! \n  I wanted to share an amazing app with you: WI Status Saver.It lets you easily save and share WhatsApp statuses like photos, videos, and GIFs. No more asking friends to send them separately – you can download them directly to your device and access them anytime! \n\n *Main Features:*\n\n 📸 Save Photos\n 🎥 Save Videos\n 🚀 Easy Sharing\n ⭐️ Favorites\n 🔍 In-App Gallery\n\n The app is free, user-friendly, and perfect for saving and sharing WhatsApp statuses with ease!\n\n *How to Get Started:*\n\n1. [Link to App Store] - Download WhatsApp Status Saver.\n\n2. Install and grant permissions.\n\n3. Open WhatsApp, view the status you want to save.\n\n4. Go back to WhatsApp Status Saver – the status will be automatically saved.\n',
-    url: 'https://photos.app.goo.gl/1VkicHncnjK16kHQ6',
-    // url: 'https://github.com/Rohitbarate/WhatsappStatusSaver/releases',
+      '*Check out our WhatsApp Status Saver app!* \n\nHey there! \n  I wanted to share an amazing app with you: WI Status Saver.It lets you easily save and share WhatsApp statuses like photos, videos, and GIFs. No more asking friends to send them separately – you can download them directly to your device and access them anytime! \n\n *Main Features:*\n\n 📸 Save Photos\n 🎥 Save Videos\n 🚀 Easy Sharing\n ⭐️ Favorites\n 🔍 In-App Gallery\n\n The app is free, user-friendly, and perfect for saving and sharing WhatsApp statuses with ease!\n\n *How to Get Started:*\n\n1. Link - https://github.com/Rohitbarate/WhatsappStatusSaver/releases - Download WhatsApp Status Saver.\n\n2. Install and grant permissions.\n\n3. Open WhatsApp, view the status you want to save.\n\n4. Go back to WhatsApp Status Saver – the status will be automatically saved.\n',
   };
 
-  const shareAppHandler = async () => {
-    // await uploadShareAppImg();
-    // Share.open(shareAppOptions)
-    //   .then(res => {
-    //     console.log(res);
-    //   })
-    //   .catch(err => {
-    //     err && console.log(err);
-    //   });
-    let imageUri;
-    RNFS.readDirAssets('images')
+  const shareAppHandler = async path => {
+    Share.open({...shareAppOptions,url:"file://"+AppShareImgDir,})
       .then(res => {
-        console.log({assets: res});
-        imageUri = `asset:/app/src/main/assets/${res.path}`;
+        console.log(res);
       })
       .catch(err => {
         err && console.log(err);
       });
-
-    Share.open({
-      url: imageUri,
-      type: 'image/jpeg', // Set the appropriate image type
-    })
-      .then(res => console.log('Share response:', res))
-      .catch(err => console.log('Share error:', err));
   };
 
   return (

@@ -204,6 +204,11 @@ const SelectedStatus = ({route, navigation}) => {
 
   const downloadStatusHandler = async () => {
     setDActionLoading(true);
+
+    if (rewardedInterstitial.loaded) {
+      rewardedInterstitial.show();
+    }
+
     const persistedUris =
       await ScopedStoragePackage.getPersistedUriPermissions();
 
@@ -557,11 +562,7 @@ const SelectedStatus = ({route, navigation}) => {
             if (isSaved) {
               deleteStatusHandler();
             } else {
-              if (rewardedInterstitial.loaded) {
-                rewardedInterstitial.show();
-              } else {
-                downloadStatusHandler();
-              }
+              downloadStatusHandler();
             }
           }}
           style={[

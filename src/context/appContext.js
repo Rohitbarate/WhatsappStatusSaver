@@ -17,6 +17,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import SendIntentAndroid from 'react-native-send-intent';
+import RNFetchBlob from 'rn-fetch-blob';
 
 // Create the user context
 export const AppContext = createContext();
@@ -215,7 +216,7 @@ export const AppProvider = ({children}) => {
             setAccessLoading(false);
             setShowDialogue(false);
             await getStatuses();
-            await requestExtPermissions();
+            // await requestExtPermissions();
           } else if (folderAccess !== null && persistedUris.length === 0) {
             // user removed scoped permission manually
             await AsyncStorage.removeItem('folderAccess');
@@ -480,6 +481,28 @@ export const AppProvider = ({children}) => {
     return result;
   };
 
+  //  download And Copy share app Image
+  const downloadAndCopyImage = async () => {
+    try {
+      const AppShareImgDir = `${RNFS.DocumentDirectoryPath}/media/shareApp.png`;
+      const imageUrl =
+        'https://todoapp-api-16rf.onrender.com/wistatussaver/shareappimage';
+
+      const isExist = await RNFS.exists(AppShareImgDir);
+      if (isExist) {
+        return;
+      }
+      // Download the image using react-native-fetch-blob
+      const response = await RNFetchBlob.config({
+        path: AppShareImgDir,
+      }).fetch('GET', imageUrl);
+
+      console.log('Image downloaded and saved:', response.path());
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
+  };
+
   // Define the value object that will be provided to the consumer components
   const value = {
     requestScopedPermissionAccess,
@@ -524,6 +547,7 @@ export const AppProvider = ({children}) => {
     showOpenAppSettings,
     setShowOpenAppSettings,
     checkExtPermissions,
+    downloadAndCopyImage,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

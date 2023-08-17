@@ -14,6 +14,7 @@ import PolicyScreen from '../screens/PolicyScreen';
 import AboutScreen from '../screens/AboutScreen';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import LinearGradient from 'react-native-linear-gradient';
+import AboutScreenStack from './AboutScreenStack';
 // import { Header } from 'react-navigation' ;
 
 const RootNavigator = () => {
@@ -79,7 +80,7 @@ const RootNavigator = () => {
           lazy: false,
         }}
       />
-      <Drawer.Screen
+      {/* <Drawer.Screen
         name="Instagram"
         component={InstagramComp}
         options={{
@@ -106,7 +107,7 @@ const RootNavigator = () => {
           //   />;
           // },
         }}
-      />
+      /> */}
       <Drawer.Screen
         name="Settings"
         component={SettingsScreen}
@@ -125,7 +126,7 @@ const RootNavigator = () => {
           ),
         }}
       />
-      <Drawer.Screen
+      {/* <Drawer.Screen
         name="Privacy Policy"
         component={PolicyScreen}
         options={{
@@ -144,10 +145,10 @@ const RootNavigator = () => {
             />
           ),
         }}
-      />
+      /> */}
       <Drawer.Screen
-        name="About"
-        component={AboutScreen}
+        name="AboutStack"
+        component={AboutScreenStack}
         options={{
           drawerIcon: ({color, size, focused}) => (
             <Icon3
@@ -161,6 +162,7 @@ const RootNavigator = () => {
               color={color}
             />
           ),
+          title:"About WISS ",
         }}
       />
     </Drawer.Navigator>

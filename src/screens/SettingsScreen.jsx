@@ -116,11 +116,14 @@ const SettingsScreen = ({navigation}) => {
         flex: 1,
         display: 'flex',
         paddingVertical: 16,
+        paddingHorizontal: 10,
         alignItems: 'center',
+        backgroundColor:"#ededed"
       }}>
       {/* app type */}
       <TouchableOpacity
         style={styles.optContDiv}
+        activeOpacity={0.5}
         onPress={() => {
           setIsModelVisible(true);
           setModelfor('appType');
@@ -138,11 +141,12 @@ const SettingsScreen = ({navigation}) => {
             </Text>
           </View>
         </View>
-        <Icon color={'#000'} size={20} name={'arrow-forward-ios'} />
+        <Icon color={'#00000050'} size={16} name={'arrow-forward-ios'} />
       </TouchableOpacity>
       {/* app theme */}
       <TouchableOpacity
         style={[styles.optContDiv]}
+        activeOpacity={0.5}
         onPress={() => {
           Alert.alert('', 'Feature will coming soon, Stay tune');
           // setIsModelVisible(true);
@@ -159,7 +163,7 @@ const SettingsScreen = ({navigation}) => {
             </Text>
           </View>
         </View>
-        <Icon color={'#000'} size={20} name={'arrow-forward-ios'} />
+        <Icon color={'#00000050'} size={16} name={'arrow-forward-ios'} />
       </TouchableOpacity>
 
       {/* {isModelVisible && ( */}
@@ -356,12 +360,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderColor: '#00000050',
-    borderWidth: 1,
     paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     marginBottom: 10,
+    backgroundColor:"#fff",
+    shadowColor:"#000",
+    elevation: 5,
   },
   optCont: {
     flexDirection: 'column',

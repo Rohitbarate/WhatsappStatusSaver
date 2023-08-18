@@ -58,7 +58,7 @@ const SelectedStatus = ({route, navigation}) => {
   // const [newStatusName, setNewStatusName] = useState(statusName);
   const {getSavedStatuses, setScrollEnabled} = useContext(AppContext);
   const {ContentUriToAbsolutePathModule} = NativeModules;
-  const [loaded, setLoaded] = useState(false);
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
 
   const video = /\.(mp4)$/i;
   const image = /\.(jpg|jpeg|png|gif)$/i;
@@ -71,7 +71,7 @@ const SelectedStatus = ({route, navigation}) => {
       : setStatusType('VID');
 
     checkIsSaved();
-    rewardedInterstitial.load();
+    // rewardedInterstitial.load();
 
     console.log({WhatsAppSavedStatusDirectory});
     function backAction() {
@@ -104,7 +104,7 @@ const SelectedStatus = ({route, navigation}) => {
     const unsubscribeLoaded = rewardedInterstitial.addAdEventListener(
       RewardedAdEventType.LOADED,
       () => {
-        setLoaded(true);
+        setIsAdLoaded(true);
         // rewardedInterstitial.show();
       },
     );
@@ -113,16 +113,18 @@ const SelectedStatus = ({route, navigation}) => {
       RewardedAdEventType.EARNED_REWARD,
       reward => {
         console.log('User earned reward of ', reward);
-        downloadStatusHandler();
+        // downloadStatusHandler();
       },
     );
+
+    rewardedInterstitial.load();
 
     // Cleanup the event listener when the component is unmounted
     return () => {
       backHandler.remove();
       unsubscribeLoaded();
       unsubscribeEarned();
-      // setLoaded(false);
+      // setIsAdLoaded(false);
       // unsubscribe;
       // setScrollEnabled(true)
     };
@@ -205,7 +207,7 @@ const SelectedStatus = ({route, navigation}) => {
   const downloadStatusHandler = async () => {
     setDActionLoading(true);
 
-    if (rewardedInterstitial.loaded) {
+    if (isAdLoaded) {
       rewardedInterstitial.show();
     }
 
@@ -563,6 +565,7 @@ const SelectedStatus = ({route, navigation}) => {
               deleteStatusHandler();
             } else {
               downloadStatusHandler();
+              // rewardedInterstitial.show();
             }
           }}
           style={[

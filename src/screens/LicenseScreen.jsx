@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import React, {useEffect,useState,useRef} from 'react';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const LicenseScreen = ({navigation}) => {
     const [showBorder,setShowBorder] = useState(false)
@@ -55,7 +55,7 @@ const LicenseScreen = ({navigation}) => {
           style={{
             alignSelf: 'flex-start',
           }}>
-          <Icon name="arrow-back-outline" size={26} color={'#323232'} />
+          <Icon name="arrow-left" size={26} color={'#323232'} />
         </TouchableOpacity>
         {showBorder && (
           <Text

@@ -185,7 +185,6 @@ const RecentScreen = ({navigation}) => {
       )}
 
       {/* Access dilogue component */}
-
       {showDilogue && !accessLoading && !showAppTypeDilogue && (
         <View style={{flex: 1, position: 'absolute'}}>
           <StatusBar backgroundColor={'red'} barStyle={'light-content'} />
@@ -256,7 +255,7 @@ const RecentScreen = ({navigation}) => {
           </Modal>
         </View>
       )}
-
+      {/* header*/}
       <View
         style={{
           justifyContent: 'space-between',

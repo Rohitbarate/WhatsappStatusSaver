@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import SendIntentAndroid from 'react-native-send-intent';
 
 const PolicyScreen = ({navigation}) => {
@@ -56,7 +56,7 @@ const PolicyScreen = ({navigation}) => {
           style={{
             alignSelf: 'flex-start',
           }}>
-          <Icon name="arrow-back-outline" size={26} color={'#323232'} />
+          <Icon name="arrow-left" size={26} color={'#323232'} />
         </TouchableOpacity>
         {showBorder && (
           <Text
@@ -135,7 +135,7 @@ const PolicyScreen = ({navigation}) => {
           information.
         </Text>
         <Text style={styles.title}>Contact Us :</Text>
-        <Text style={[styles.text,{marginBottom:0}]}>
+        <Text style={[styles.text, {marginBottom: 0}]}>
           If you have any questions about how we handle user data and personal
           information, feel free to contact us.
         </Text>
@@ -143,13 +143,15 @@ const PolicyScreen = ({navigation}) => {
           onPress={() => {
             SendIntentAndroid.sendMail(
               'baraterohit100@gamil.com',
-              'Subject test',
-              'Test body',
+              '',
+              'We excited to read and solve your queries. 😊😊 please explain your query in detail.',
             );
           }}
-          style={{marginBottom:10}}
-          >
-          <Text style={{color:"#000",fontWeight:"600",fontSize:16}}>Email Us</Text>
+          style={{marginBottom: 10,flexDirection:"row",alignItems:"center",marginTop:5}}>
+          <Icon name="gmail" size={20} color={'#C71610'} />
+          <Text style={{color: '#0000ff', fontWeight: '600', fontSize: 14,textDecorationColor:"#00f",textDecorationLine:"underline",marginLeft:5}}>
+            Email Us
+          </Text>
         </TouchableOpacity>
         <Text style={styles.text}>
           This policy is effective as of 15 August 2023.
